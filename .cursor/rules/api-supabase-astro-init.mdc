@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+---
+
 # Supabase Astro Initialization
 
 This document provides a reproducible guide to create the necessary file structure for integrating Supabase with your Astro project.
@@ -30,7 +34,6 @@ export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKe
 
 This file initializes the Supabase client using the environment variables `SUPABASE_URL` and `SUPABASE_KEY`.
 
-
 ### 2. Middleware Setup
 
 Create the file `/src/middleware/index.ts` with the following content:
@@ -47,7 +50,6 @@ export const onRequest = defineMiddleware((context, next) => {
 ```
 
 This middleware adds the Supabase client to the Astro context locals, making it available throughout your application.
-
 
 ### 3. TypeScript Environment Definitions
 
