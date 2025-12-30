@@ -1,0 +1,339 @@
+# Database Schema Plan - AI-Powered Flashcard Learning Application
+
+**Version:** 1.0  
+**Date:** December 30, 2025  
+**Status:** Approved
+
+---
+
+## 1. Executive Summary
+
+This document summarizes all database design decisions made during the planning phase for the MVP of the AI-Powered Flashcard Learning Application. All recommendations have been approved and are ready for implementation.
+
+---
+
+## 2. Core Design Decisions
+
+### 2.1 User Management
+
+| Decision             | Choice                                                   |
+| -------------------- | -------------------------------------------------------- |
+| User table approach  | Supabase Auth (`auth.users`) + separate `profiles` table |
+| Profile creation     | Automatic via trigger on `auth.users` INSERT             |
+| Data deletion (GDPR) | `ON DELETE CASCADE` for all user-related tables          |
+
+### 2.2 Data Types
+
+| Field              | Type                                     | Rationale                                   |
+| ------------------ | ---------------------------------------- | ------------------------------------------- |
+| Primary keys       | `UUID` (v4)                              | Supabase default, sufficient for MVP scale  |
+| `creation_method`  | `ENUM ('ai', 'manual')`                  | Type safety, validation at DB level         |
+| `review_rating`    | `ENUM ('again', 'hard', 'good', 'easy')` | Readable, self-documenting                  |
+| `next_review_date` | `DATE`                                   | SM-2 operates on days, not timestamps       |
+| `interval`         | `INTEGER`                                | Days as integer, simpler than INTERVAL type |
+| `easiness_factor`  | `DECIMAL(4,2)`                           | Precision for SM-2 calculations             |
+| `edit_percentage`  | `DECIMAL(5,2)`                           | Calculated at save time, stored statically  |
+| Timestamps         | `TIMESTAMP WITH TIME ZONE`               | UTC storage, client-side conversion         |
+
+### 2.3 Denormalization Decisions
+
+| Table        | Denormalized Field | Rationale                                  |
+| ------------ | ------------------ | ------------------------------------------ |
+| `flashcards` | `user_id`          | RLS performance - avoids JOIN with `decks` |
+
+### 2.4 Constraints
+
+| Constraint                  | Implementation                      |
+| --------------------------- | ----------------------------------- |
+| Unique deck name per user   | `UNIQUE (user_id, name)` on `decks` |
+| Non-empty question/answer   | `CHECK (LENGTH(TRIM(field)) > 0)`   |
+| EF minimum value            | `CHECK (easiness_factor >= 1.3)`    |
+| Deck name length            | `VARCHAR(100)` with CHECK           |
+| 5000 flashcards limit       | Trigger `BEFORE INSERT`             |
+| One active session per deck | Partial unique index                |
+
+### 2.5 Deletion Strategy
+
+| Approach                   | Decision                                             |
+| -------------------------- | ---------------------------------------------------- |
+| Soft delete vs Hard delete | **Hard delete** with CASCADE                         |
+| Rationale                  | Simpler queries, GDPR compliance, sufficient for MVP |
+
+---
+
+## 3. Tables Overview
+
+### 3.1 profiles
+
+Extension of Supabase Auth users.
+
+| Column       | Type        | Constraints                               |
+| ------------ | ----------- | ----------------------------------------- |
+| `id`         | UUID        | PK, FK → auth.users(id) ON DELETE CASCADE |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW()                             |
+| `updated_at` | TIMESTAMPTZ | DEFAULT NOW(), auto-updated               |
+
+### 3.2 decks
+
+User's flashcard collections.
+
+| Column        | Type         | Constraints                                     |
+| ------------- | ------------ | ----------------------------------------------- |
+| `id`          | UUID         | PK, DEFAULT gen_random_uuid()                   |
+| `user_id`     | UUID         | FK → auth.users(id) ON DELETE CASCADE, NOT NULL |
+| `name`        | VARCHAR(100) | NOT NULL, CHECK length 1-100                    |
+| `description` | TEXT         | nullable                                        |
+| `created_at`  | TIMESTAMPTZ  | DEFAULT NOW()                                   |
+| `updated_at`  | TIMESTAMPTZ  | DEFAULT NOW(), auto-updated                     |
+
+**Constraints:** UNIQUE (user_id, name)
+
+### 3.3 flashcards
+
+Individual flashcards with SM-2 data.
+
+| Column              | Type         | Constraints                                                    |
+| ------------------- | ------------ | -------------------------------------------------------------- |
+| `id`                | UUID         | PK, DEFAULT gen_random_uuid()                                  |
+| `deck_id`           | UUID         | FK → decks(id) ON DELETE CASCADE, NOT NULL                     |
+| `user_id`           | UUID         | FK → auth.users(id) ON DELETE CASCADE, NOT NULL (denormalized) |
+| `question`          | TEXT         | NOT NULL, CHECK non-empty                                      |
+| `answer`            | TEXT         | NOT NULL, CHECK non-empty                                      |
+| `creation_method`   | ENUM         | NOT NULL, ('ai', 'manual')                                     |
+| `original_question` | TEXT         | nullable (required if AI)                                      |
+| `original_answer`   | TEXT         | nullable (required if AI)                                      |
+| `edit_percentage`   | DECIMAL(5,2) | nullable                                                       |
+| `easiness_factor`   | DECIMAL(4,2) | DEFAULT 2.5, CHECK >= 1.3                                      |
+| `repetition_count`  | INTEGER      | DEFAULT 0                                                      |
+| `interval`          | INTEGER      | DEFAULT 0                                                      |
+| `next_review_date`  | DATE         | DEFAULT CURRENT_DATE                                           |
+| `created_at`        | TIMESTAMPTZ  | DEFAULT NOW()                                                  |
+| `updated_at`        | TIMESTAMPTZ  | DEFAULT NOW(), auto-updated                                    |
+
+### 3.4 review_sessions
+
+Study session tracking.
+
+| Column           | Type        | Constraints                                     |
+| ---------------- | ----------- | ----------------------------------------------- |
+| `id`             | UUID        | PK, DEFAULT gen_random_uuid()                   |
+| `user_id`        | UUID        | FK → auth.users(id) ON DELETE CASCADE, NOT NULL |
+| `deck_id`        | UUID        | FK → decks(id) ON DELETE CASCADE, NOT NULL      |
+| `started_at`     | TIMESTAMPTZ | DEFAULT NOW()                                   |
+| `ended_at`       | TIMESTAMPTZ | nullable (NULL = in progress)                   |
+| `cards_reviewed` | INTEGER     | DEFAULT 0                                       |
+
+**Constraints:** CHECK (ended_at IS NULL OR ended_at >= started_at)
+
+### 3.5 review_history
+
+Individual card review records.
+
+| Column         | Type        | Constraints                                          |
+| -------------- | ----------- | ---------------------------------------------------- |
+| `id`           | UUID        | PK, DEFAULT gen_random_uuid()                        |
+| `flashcard_id` | UUID        | FK → flashcards(id) ON DELETE CASCADE, NOT NULL      |
+| `session_id`   | UUID        | FK → review_sessions(id) ON DELETE CASCADE, NOT NULL |
+| `rating`       | ENUM        | NOT NULL, ('again', 'hard', 'good', 'easy')          |
+| `reviewed_at`  | TIMESTAMPTZ | DEFAULT NOW()                                        |
+
+---
+
+## 4. Indexes
+
+| Index Name                        | Table           | Columns                     | Type           | Purpose                     |
+| --------------------------------- | --------------- | --------------------------- | -------------- | --------------------------- |
+| `idx_flashcards_deck_id`          | flashcards      | deck_id                     | B-tree         | Fetch cards by deck         |
+| `idx_flashcards_next_review_date` | flashcards      | (deck_id, next_review_date) | B-tree         | Due cards query             |
+| `idx_flashcards_user_id`          | flashcards      | user_id                     | B-tree         | RLS performance             |
+| `idx_review_sessions_user_deck`   | review_sessions | (user_id, deck_id)          | B-tree         | User statistics             |
+| `idx_review_history_flashcard`    | review_history  | flashcard_id                | B-tree         | Card history                |
+| `idx_review_history_reviewed_at`  | review_history  | reviewed_at                 | B-tree         | Analytics (DAU)             |
+| `idx_active_sessions`             | review_sessions | (user_id, deck_id)          | Partial unique | One active session per deck |
+
+---
+
+## 5. Functions & Triggers
+
+### 5.1 update_updated_at_column()
+
+Auto-updates `updated_at` on row modification.
+
+- **Applied to:** profiles, decks, flashcards
+
+### 5.2 handle_new_user()
+
+Creates profile record when user registers.
+
+- **Trigger:** AFTER INSERT on auth.users
+- **Security:** SECURITY DEFINER with search_path = ''
+
+### 5.3 set_flashcard_user_id()
+
+Syncs `user_id` from deck when flashcard is created.
+
+- **Trigger:** BEFORE INSERT on flashcards
+
+### 5.4 check_flashcard_limit()
+
+Enforces 5000 flashcard limit per user.
+
+- **Trigger:** BEFORE INSERT on flashcards
+
+---
+
+## 6. Views
+
+### deck_statistics
+
+Aggregated deck information for dashboard.
+
+```sql
+SELECT
+  d.id,
+  d.user_id,
+  d.name,
+  d.description,
+  COUNT(f.id) AS total_cards,
+  COUNT(CASE WHEN f.next_review_date <= CURRENT_DATE THEN 1 END) AS due_cards,
+  d.created_at,
+  d.updated_at
+FROM decks d
+LEFT JOIN flashcards f ON f.deck_id = d.id
+GROUP BY d.id;
+```
+
+---
+
+## 7. Row Level Security (RLS)
+
+### 7.1 Policy Strategy
+
+- Separate policies for each operation (SELECT, INSERT, UPDATE, DELETE)
+- Based on `auth.uid()` matching `user_id`
+- Enabled on all tables
+
+### 7.2 Policies by Table
+
+**profiles:**
+
+- SELECT/UPDATE/DELETE: `id = auth.uid()`
+- INSERT: `id = auth.uid()` (handled by trigger)
+
+**decks:**
+
+- All operations: `user_id = auth.uid()`
+
+**flashcards:**
+
+- All operations: `user_id = auth.uid()`
+
+**review_sessions:**
+
+- All operations: `user_id = auth.uid()`
+
+**review_history:**
+
+- SELECT: via JOIN with review_sessions
+- INSERT: session belongs to user
+- DELETE: via CASCADE
+
+---
+
+## 8. Not Implemented (MVP Scope)
+
+| Feature                         | Rationale                               |
+| ------------------------------- | --------------------------------------- |
+| Soft delete                     | Hard delete sufficient, GDPR compliance |
+| Supabase Realtime               | No real-time requirements in PRD        |
+| Full-text search index          | ILIKE sufficient at MVP scale           |
+| Previous SM-2 values in history | Not required by PRD                     |
+| Separate analytics events table | Can calculate from existing data        |
+| User preferences table          | No preferences defined in PRD           |
+| content_type storage            | Only used for AI prompt, not persisted  |
+| Custom DB roles                 | Supabase defaults sufficient            |
+| Optimistic locking              | Low conflict risk at MVP scale          |
+| UUID v7                         | UUID v4 sufficient at MVP scale         |
+
+---
+
+## 9. Migration Files
+
+Migrations are organized in `ai/migrations/` directory:
+
+1. `001_create_enums.sql` - Custom ENUM types
+2. `002_create_tables.sql` - All tables with constraints
+3. `003_create_functions.sql` - Functions and triggers
+4. `004_create_indexes.sql` - Performance indexes
+5. `005_create_rls_policies.sql` - Row Level Security
+6. `006_create_views.sql` - Database views
+
+---
+
+## 10. Entity Relationship Diagram
+
+```
+┌─────────────────┐
+│   auth.users    │
+│   (Supabase)    │
+└────────┬────────┘
+         │ 1
+         │
+         ▼ 1
+┌─────────────────┐       ┌─────────────────┐
+│    profiles     │       │  review_sessions │
+│                 │       │                  │
+│ id (PK, FK)     │       │ id (PK)          │
+│ created_at      │       │ user_id (FK)     │◄──┐
+│ updated_at      │       │ deck_id (FK)     │   │
+└─────────────────┘       │ started_at       │   │
+                          │ ended_at         │   │
+         │                │ cards_reviewed   │   │
+         │ 1              └────────┬─────────┘   │
+         │                         │ 1           │
+         ▼ *                       │             │
+┌─────────────────┐                ▼ *           │
+│     decks       │       ┌─────────────────┐   │
+│                 │       │ review_history  │   │
+│ id (PK)         │       │                 │   │
+│ user_id (FK)    │───────│ id (PK)         │   │
+│ name            │       │ flashcard_id(FK)│   │
+│ description     │       │ session_id (FK) │───┘
+│ created_at      │       │ rating          │
+│ updated_at      │       │ reviewed_at     │
+└────────┬────────┘       └─────────────────┘
+         │ 1                       ▲
+         │                         │ *
+         ▼ *                       │
+┌─────────────────┐                │
+│   flashcards    │────────────────┘
+│                 │
+│ id (PK)         │
+│ deck_id (FK)    │
+│ user_id (FK)    │ ← denormalized
+│ question        │
+│ answer          │
+│ creation_method │
+│ original_*      │
+│ edit_percentage │
+│ easiness_factor │
+│ repetition_count│
+│ interval        │
+│ next_review_date│
+│ created_at      │
+│ updated_at      │
+└─────────────────┘
+```
+
+---
+
+**Document Approval:**
+
+| Decision                 | Status      |
+| ------------------------ | ----------- |
+| All recommendations      | ✅ Approved |
+| Ready for implementation | ✅ Yes      |
+
+---
+
+_Last Updated: December 30, 2025_

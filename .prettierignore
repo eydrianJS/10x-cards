@@ -1,0 +1,10 @@
+dist/
+node_modules/
+.astro/
+.env
+.env.local
+.env.production
+*.min.js
+*.min.css
+coverage/
+.nyc_output/
