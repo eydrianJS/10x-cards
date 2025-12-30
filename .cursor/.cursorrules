@@ -1,0 +1,450 @@
+# AI Rules for AI-Powered Flashcard Learning Application
+
+An AI-powered web application that automatically generates high-quality flashcards from text input using OpenRouter AI, integrated with a proven spaced repetition algorithm (SM-2), enabling users to focus on learning rather than card creation.
+
+**Tech Stack:**
+
+- Frontend: Astro 5 + React 19 + TypeScript 5
+- Styling: Tailwind CSS 4 + Shadcn/ui
+- Backend: Supabase (PostgreSQL + Auth) + Astro API Routes
+- AI: OpenRouter.ai
+- Deployment: Docker + DigitalOcean + Nginx
+- CI/CD: GitHub Actions
+
+**Key Features:**
+
+- AI-powered flashcard generation from text (max 500 chars)
+- SM-2 spaced repetition algorithm for optimal review scheduling
+- Deck-based organization by subject/topic
+- Manual flashcard creation and editing
+- User authentication and data privacy (GDPR compliant)
+- Export functionality (CSV/JSON)
+
+**Target Users:**
+
+- High school students studying for exams
+- Professionals preparing for certification exams
+
+**Scale:** 10 concurrent users, up to 5,000 flashcards per user
+
+---
+
+## FRONTEND
+
+### Guidelines for ASTRO
+
+#### ASTRO_CODING_STANDARDS
+
+- Use Astro 5 components (.astro) for static content and layout
+- Use file-based routing system in `src/pages/` directory
+- Implement framework components in React 19 only when interactivity is needed (flashcard review, deck management, AI generation UI)
+- Leverage View Transitions API for smooth page transitions
+- Use content collections with type safety for blog posts, documentation, etc.
+- Implement middleware for request/response modification
+- Use image optimization with the Astro Image integration
+- Leverage Astro API Routes (Server Endpoints) for backend operations:
+  - Located in `src/pages/api/`
+  - Use for OpenRouter AI proxy at `/api/ai-generate.ts`
+  - Use for flashcard CRUD operations at `/api/flashcards/*`
+  - Keep API keys secure (never expose to client)
+- Implement hybrid rendering with server-side rendering where needed
+- Use Astro.cookies for server-side cookie management
+- Leverage import.meta.env for environment variables (PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, OPENROUTER_API_KEY)
+- Use TypeScript 5 with strict mode for all Astro components and API routes
+
+### Guidelines for REACT
+
+#### ZUSTAND
+
+- Create separate stores for distinct state domains instead of one large store (e.g., flashcard store, deck store, review session store, auth store)
+- Use immer middleware for complex state updates to maintain immutability when dealing with nested data
+- Implement selectors to derive state and prevent unnecessary re-renders
+- Leverage the persist middleware for automatic state persistence in localStorage or other storage
+- Use TypeScript 5 with strict typing for store definitions to catch errors at compile time
+- Prefer shallow equality checks with useShallow for performance optimization in component re-renders
+- Combine stores using composition for sharing logic between stores
+- Implement subscriptions to react to state changes outside of React components
+- Use devtools middleware for Redux DevTools integration in development
+- Create custom hooks to encapsulate store access and related business logic
+
+### Guidelines for STYLING
+
+#### TAILWIND_CSS
+
+- Use Tailwind CSS 4 utility classes for all styling
+- Follow mobile-first responsive design approach (sm:, md:, lg:, xl:, 2xl:)
+- Leverage Tailwind's design tokens for consistent spacing, colors, and typography
+- Use @apply sparingly, prefer utility classes directly in components
+- Configure custom colors, fonts, and design tokens in tailwind.config.js
+- Ensure minimum screen width support: 320px (mobile)
+- Target optimal experience: 768px+ (tablet/desktop)
+- Maintain consistent printWidth (80-120 characters) for class readability
+
+#### SHADCN_UI
+
+- Use Shadcn/ui components as the foundation for UI elements
+- Customize Shadcn components with Tailwind CSS classes
+- Leverage pre-built accessible components: buttons, forms, modals, cards, dialogs
+- Key components for this project:
+  - Button, Card, Input, Textarea (flashcard creation/editing)
+  - Dialog, AlertDialog (confirmations, modals)
+  - Form, Label (manual flashcard creation)
+  - Badge, Progress (review session UI)
+- Maintain accessibility standards (WCAG 2.1 AA)
+- Ensure keyboard navigation support and sufficient color contrast
+- Import only needed components to optimize bundle size
+
+---
+
+## BACKEND
+
+### Guidelines for ASTRO_API_ROUTES
+
+#### SERVER_ENDPOINTS
+
+- Create API endpoints in `src/pages/api/` directory (e.g., `src/pages/api/ai-generate.ts`)
+- Export named functions for HTTP methods: GET, POST, PUT, DELETE, PATCH
+- Use TypeScript 5 for all API routes with strict typing
+- Validate request payloads using TypeScript interfaces or Zod schemas
+- Return responses using `new Response()` with proper status codes and JSON
+- Implement proper error handling with try-catch blocks:
+  - Validation errors (400 Bad Request)
+  - Authentication errors (401 Unauthorized)
+  - Supabase errors (500 Internal Server Error)
+  - OpenRouter AI API errors (502 Bad Gateway or 500)
+- Never expose sensitive API keys (OPENROUTER_API_KEY) to client-side
+- Use `import.meta.env` for server-side environment variables
+- Implement request validation before processing
+- Use async/await for all database and API calls
+- Log errors appropriately for debugging (avoid logging sensitive data)
+
+#### SUPABASE_INTEGRATION
+
+- Use Supabase SDK for all database operations
+- Implement Row Level Security (RLS) policies for all tables
+- Use Supabase Auth for user authentication and session management
+- Access Supabase from both client-side (React islands) and server-side (Astro API routes)
+- Client-side: Use PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY
+- Server-side: Can use service role key for admin operations (if needed)
+- Leverage Supabase real-time subscriptions for live updates (optional enhancement)
+- Use connection pooling (handled by Supabase)
+- Implement proper error handling for Supabase operations
+
+---
+
+## DATABASE
+
+### Guidelines for SQL
+
+#### POSTGRES
+
+- Use connection pooling to manage database connections efficiently
+- Implement JSONB columns for semi-structured data instead of creating many tables (potentially for flashcard metadata, review statistics)
+- Use materialized views for complex, frequently accessed read-only data (analytics dashboards, user statistics)
+
+---
+
+## CODING_PRACTICES
+
+### Guidelines for ARCHITECTURE
+
+#### CLEAN_ARCHITECTURE
+
+- Strictly separate code into layers: entities, use cases, interfaces, and frameworks
+- Ensure dependencies point inward, with inner layers having no knowledge of outer layers
+- Implement domain entities that encapsulate SM-2 algorithm logic, flashcard validation, deck operations without framework dependencies
+- Use interfaces (ports) and implementations (adapters) to isolate external dependencies (Supabase, OpenRouter API)
+- Create use cases that orchestrate entity interactions for specific business operations (generate flashcards, conduct review session, export deck)
+- Implement mappers to transform data between layers to maintain separation of concerns
+
+### Guidelines for DOCUMENTATION
+
+#### STORYBOOK
+
+- Organize stories by component hierarchy to mirror the application structure
+- Implement comprehensive controls to showcase component variations for flashcard components, deck cards, review interface components, AI generation forms
+- Use MDX format to combine documentation and live examples for complex components
+- Configure Storybook addons for accessibility, responsive design, and interaction testing
+- Implement design token integration to showcase components with different themes
+- Create interaction tests to verify component behavior in addition to visual appearance
+
+### Guidelines for STATIC_ANALYSIS
+
+#### ESLINT
+
+- Configure project-specific rules in eslint.config.js to enforce consistent coding standards
+- Use shareable configs like eslint-config-airbnb or eslint-config-standard as a foundation
+- Implement custom rules for TypeScript strict mode, React hooks best practices, async/await patterns to maintain codebase consistency
+- Configure integration with Prettier to avoid rule conflicts for code formatting
+- Use the --fix flag in CI/CD pipelines to automatically correct fixable issues
+- Implement staged linting with husky and lint-staged to prevent committing non-compliant code
+
+#### PRETTIER
+
+- Define a consistent .prettierrc configuration across all project repositories
+- Configure editor integration to format on save for immediate feedback
+- Use .prettierignore to exclude generated files, build artifacts, and node_modules, .astro build output, Docker files
+- Set printWidth based on team preferences (80-120 characters) to improve code readability
+- Configure consistent quote style and semicolon usage to match team conventions
+- Implement CI checks to ensure all committed code adheres to the defined style
+
+### Guidelines for SUPPORT_LEVEL
+
+#### SUPPORT_EXPERT
+
+- Favor elegant, maintainable solutions over verbose code. Assume understanding of language idioms and design patterns.
+- Highlight potential performance implications and optimization opportunities in suggested code.
+- Frame solutions within broader architectural contexts and suggest design alternatives when appropriate.
+- Focus comments on 'why' not 'what' - assume code readability through well-named functions and variables.
+- Proactively address edge cases, race conditions, and security considerations without being prompted.
+- When debugging, provide targeted diagnostic approaches rather than shotgun solutions.
+- Suggest comprehensive testing strategies rather than just example tests, including considerations for mocking, test organization, and coverage.
+
+### Guidelines for VERSION_CONTROL
+
+#### GITHUB
+
+- Use pull request templates to standardize information provided for code reviews
+- Implement branch protection rules for main branch to enforce quality checks
+- Configure required status checks to prevent merging code that fails tests or linting
+- Use GitHub Actions for CI/CD workflows to automate testing and deployment
+- Implement CODEOWNERS files to automatically assign reviewers based on code paths
+- Use GitHub Projects for tracking work items and connecting them to code changes
+
+---
+
+## DEVOPS
+
+### Guidelines for CI_CD
+
+#### GITHUB_ACTIONS
+
+- Check if `package.json` exists in project root and summarize key scripts
+- Check if `.nvmrc` exists in project root
+- Check if `.env.example` exists in project root to identify key `env:` variables (OPENROUTER_API_KEY, PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY)
+- Always use terminal command: `git branch -a | cat` to verify whether we use `main` or `master` branch
+- Always use `env:` variables and secrets attached to jobs instead of global workflows
+- Use `npm ci` or `pnpm install --frozen-lockfile` for Node-based dependency setup (check package manager)
+- Run automated testing on push/pull requests
+- Run ESLint and Prettier checks before build
+- Build Docker image after successful tests
+- Extract common steps into composite actions in separate files
+- Implement automated deployment to DigitalOcean on main branch push
+- Use SSH to connect to DigitalOcean droplet for deployment
+- Once you're done, as a final step conduct the following: for each public action always use terminal to see what is the most up-to-date version (use only major version) - extract tag_name from the response:
+- `bash curl -s https://api.github.com/repos/{owner}/{repo}/releases/latest `
+
+### Guidelines for CONTAINERIZATION
+
+#### DOCKER
+
+- Use multi-stage builds to create smaller production images
+- Stage 1: Build stage (install deps, build Astro app)
+- Stage 2: Production stage (copy built assets, minimal runtime)
+- Implement layer caching strategies to speed up builds for npm/pnpm dependencies, Astro build artifacts
+- Use non-root users in containers for better security
+- Expose port 4321 (Astro default port)
+- Use environment variables for configuration (passed at runtime)
+- Create `.dockerignore` to exclude node_modules, .git, .env files
+- Tag images appropriately for versioning
+- Optimize image size (target: <500MB for production)
+
+### Guidelines for DEPLOYMENT
+
+#### DIGITALOCEAN
+
+- Deploy to DigitalOcean Droplet (Ubuntu)
+- Use Docker Compose for container orchestration
+- Configure Nginx as reverse proxy in front of Astro app
+- Set up SSL/TLS certificates (Let's Encrypt via Certbot)
+- Configure firewall (ufw) to allow only necessary ports: 80, 443, 22
+- Use environment variables for secrets (never commit .env to repo)
+- Implement automated deployment via GitHub Actions SSH
+- Keep Docker images updated and rebuild on changes
+- Monitor droplet resources (CPU, memory, disk usage)
+- Set up automatic backups for droplet
+
+#### NGINX
+
+- Configure Nginx as reverse proxy to forward requests to Docker container
+- Proxy requests to Astro app running on port 4321
+- Enable HTTPS-only with SSL/TLS certificates
+- Set up automatic HTTP to HTTPS redirect
+- Configure proper security headers:
+  - Strict-Transport-Security
+  - X-Content-Type-Options
+  - X-Frame-Options
+  - X-XSS-Protection
+- Enable gzip compression for static assets
+- Set up proper caching headers for static files
+- Configure rate limiting to prevent abuse
+- Log access and errors for monitoring
+
+---
+
+## TESTING
+
+### Guidelines for UNIT
+
+#### JEST
+
+- Use Jest with TypeScript for type checking in tests
+- Implement Testing Library for component testing instead of enzyme
+- Use snapshot testing sparingly and only for stable UI components
+- Leverage mock functions and spies for isolating units of code
+- Implement test setup and teardown with beforeEach and afterEach
+- Use describe blocks for organizing related tests
+- Leverage expect assertions with specific matchers
+- Implement code coverage reporting with meaningful targets
+- Use mockResolvedValue and mockRejectedValue for async testing
+- Leverage fake timers for testing time-dependent functionality (SM-2 algorithm, review scheduling)
+
+### Guidelines for INTEGRATION
+
+#### SUPERTEST
+
+- Use async/await with supertest for cleaner test code
+- Implement a test database for integration tests
+- Use beforeEach/afterEach hooks for database setup and teardown when testing flashcard CRUD endpoints, deck management endpoints, AI generation endpoint
+
+---
+
+## PROJECT-SPECIFIC GUIDELINES
+
+### AI Integration (OpenRouter)
+
+- **Security:** NEVER expose OPENROUTER_API_KEY to client-side code. Always proxy AI requests through Astro API routes (`src/pages/api/ai-generate.ts`)
+- **API Access:** Use OpenRouter API for access to multiple AI models (OpenAI, Anthropic, Google, etc.)
+- **Model Selection:** Configure model selection with cost optimization in mind
+- **Error Handling:** Implement retry logic (3 attempts with exponential backoff) for AI API calls
+- **Rate Limiting:** Enforce max 500 characters input, max 20 flashcards per generation
+- **Cost Control:** Monitor API spending limits through OpenRouter dashboard
+- **Prompt Engineering:** Use content-type-specific prompts (Academic, Technical, General Knowledge, Language Learning) for better quality
+- **Response Format:** Expect JSON array format: `[{"question": "...", "answer": "..."}, ...]`
+- **Timeout:** 30 seconds maximum for AI API calls
+- **Request Flow:** Client (React) → Astro API Route → OpenRouter API → Response
+
+### Flashcard & Spaced Repetition
+
+- **SM-2 Algorithm:** Implement with EF=2.5, n=0, I=0 initial values
+- **Rating System:** Map user ratings (Again/Hard/Good/Easy) to SM-2 quality scores (0-5)
+- **Data Tracking:** Store `creation_method` (ai/manual), `original_question`, `original_answer`, `edit_percentage` for analytics
+- **KPI Target:** 75% AI acceptance rate (unmodified or <30% edited)
+- **Review Interface:** Anki-style (question → show answer → rate difficulty)
+
+### Authentication & Data Privacy
+
+- **Supabase Auth:** Use `supabase.auth.signUp()`, `signInWithPassword()`, `signOut()`, `resetPasswordForEmail()`
+- **Row Level Security:** Enable RLS policies on all tables (users can only access their own data)
+- **GDPR Compliance:** Implement complete data deletion on account closure (delete decks, flashcards, review history, user account)
+- **Session Management:** 30-day session timeout, maintain session across browser refreshes
+- **Password Requirements:** Min 8 chars, 1 uppercase, 1 lowercase, 1 number
+
+### Performance & UX
+
+- **Loading States:** Show loading indicators during AI processing, data fetching
+- **Optimistic UI:** Update UI immediately for user actions, rollback on error
+- **Islands Architecture:** Use React 19 islands only for interactive components:
+  - Dashboard (React Island) - deck overview, statistics
+  - Flashcard Review (React Island) - spaced repetition interface
+  - Deck Management (React Island) - create, edit, delete decks
+  - AI Generation Form (React Island) - text input, preview, edit
+- **Static Pages:** Use Astro 5 components for:
+  - Landing page (marketing, features)
+  - Authentication pages (login, register, password reset)
+  - Documentation and static content
+- **Page Load Target:** <2 seconds
+- **Rendering Strategy:**
+  - Server-Side Rendering (SSR) for pages requiring auth or dynamic data
+  - Static Site Generation (SSG) for public marketing pages
+  - Client-Side Rendering (CSR) only within React islands
+
+### Analytics & Metrics
+
+- Track events: `ai_flashcard_generated`, `flashcard_saved_unmodified`, `flashcard_saved_modified`, `flashcard_deleted_from_preview`, `flashcard_created_manual`
+- Measure: AI acceptance rate, AI creation ratio, DAU, session completion rate
+- Store: `review_sessions` table with user_id, deck_id, started_at, ended_at, cards_reviewed
+
+---
+
+## ENVIRONMENT VARIABLES
+
+```bash
+# Supabase (Public - safe for client)
+PUBLIC_SUPABASE_URL=your_supabase_project_url
+PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# OpenRouter AI (Server-side ONLY - never expose to client)
+OPENROUTER_API_KEY=your_openrouter_api_key
+
+# Application
+NODE_ENV=production
+PORT=4321
+```
+
+---
+
+## ARCHITECTURE OVERVIEW
+
+### System Architecture
+
+```
+Client Browser
+  ├── Astro Pages (SSR) - Landing, Auth pages
+  └── React Islands (CSR) - Dashboard, Review, AI Generation
+       ↓
+  HTTPS
+       ↓
+DigitalOcean Droplet (Ubuntu)
+  ├── Nginx Reverse Proxy (SSL/TLS, port 80/443)
+  └── Docker Container
+       └── Astro Application Server (port 4321)
+            ├── Astro API Routes (/api/*)
+            │    ├── /api/ai-generate.ts → OpenRouter API
+            │    └── /api/flashcards/* → Supabase
+            └── Static Assets
+                 ↓
+       External Services
+       ├── Supabase (PostgreSQL + Auth)
+       └── OpenRouter AI (GPT/Claude/etc)
+```
+
+### Request Flow Examples
+
+**AI Flashcard Generation:**
+
+1. User inputs text in React Island (client)
+2. React calls `/api/ai-generate.ts` (Astro API route)
+3. API route validates input, calls OpenRouter API (server-side)
+4. OpenRouter processes with selected AI model
+5. API route returns flashcards JSON to client
+6. React displays preview, allows editing
+7. User saves → React calls `/api/flashcards/create` → Supabase
+
+**Spaced Repetition Review:**
+
+1. User clicks "Study" on deck (React Island)
+2. React calls `/api/flashcards/due` with deck_id
+3. API route queries Supabase for due cards (with RLS)
+4. Cards returned to client
+5. User rates cards (Again/Hard/Good/Easy)
+6. React calls `/api/flashcards/update-sm2` → Supabase updates
+
+**Authentication:**
+
+1. User submits login form (Astro page or React Island)
+2. Supabase Auth handles authentication (client-side SDK)
+3. Session stored in browser (httpOnly cookie)
+4. Protected routes check session via Supabase
+5. API routes validate session for all requests
+
+---
+
+## KEY SUCCESS CRITERIA
+
+- 75% AI flashcard acceptance rate (unmodified or <30% edited)
+- 75% of flashcards created using AI vs manual
+- Zero critical bugs or security issues
+- Average session completion rate >80%
+- HTTPS-only communication
+- Row Level Security enforced on all user data
