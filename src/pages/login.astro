@@ -1,0 +1,38 @@
+---
+import '../styles/global.css';
+import AuthForm from '../components/islands/AuthForm';
+
+// Check if user is already logged in
+import { createSupabaseServerClient } from '../db/supabase.server';
+
+const supabase = createSupabaseServerClient(Astro.cookies);
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+if (user) {
+  return Astro.redirect('/dashboard');
+}
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Login - AI Flashcard App</title>
+  </head>
+  <body class="min-h-screen bg-background">
+    <div class="container mx-auto px-4 py-16">
+      <div class="mb-8 text-center">
+        <a href="/" class="inline-block">
+          <h1 class="text-2xl font-bold text-foreground hover:text-primary transition-colors">
+            AI Flashcard App
+          </h1>
+        </a>
+      </div>
+      <AuthForm client:load mode="login" />
+    </div>
+  </body>
+</html>

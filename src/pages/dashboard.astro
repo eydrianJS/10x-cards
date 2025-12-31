@@ -1,0 +1,105 @@
+---
+import '../styles/global.css';
+import LogoutButton from '../components/islands/LogoutButton';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+
+// Check if user is authenticated
+import { createSupabaseServerClient } from '../db/supabase.server';
+
+const supabase = createSupabaseServerClient(Astro.cookies);
+const {
+  data: { user },
+  error,
+} = await supabase.auth.getUser();
+
+if (error || !user) {
+  return Astro.redirect('/login');
+}
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Dashboard - AI Flashcard App</title>
+  </head>
+  <body class="min-h-screen bg-background">
+    <div class="container mx-auto px-4 py-8">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-foreground">Dashboard</h1>
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-muted-foreground">{user.email}</span>
+          <LogoutButton client:load />
+        </div>
+      </div>
+
+      <!-- Welcome Card -->
+      <Card class="mb-8">
+        <CardHeader>
+          <CardTitle>Welcome to AI Flashcard Learning!</CardTitle>
+          <CardDescription>
+            Your personalized dashboard for creating and studying flashcards with AI
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p class="text-muted-foreground">
+            🎉 You've successfully logged in! Your authentication system is working perfectly.
+          </p>
+        </CardContent>
+      </Card>
+
+      <!-- Quick Stats Grid -->
+      <div class="grid gap-4 md:grid-cols-3 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-base">Total Decks</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p class="text-3xl font-bold">0</p>
+            <p class="text-sm text-muted-foreground mt-1">No decks yet</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-base">Total Flashcards</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p class="text-3xl font-bold">0</p>
+            <p class="text-sm text-muted-foreground mt-1">Create your first deck</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-base">Cards Due Today</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p class="text-3xl font-bold">0</p>
+            <p class="text-sm text-muted-foreground mt-1">All caught up!</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- Coming Soon Section -->
+      <Card>
+        <CardHeader>
+          <CardTitle>Coming Soon</CardTitle>
+          <CardDescription>Features currently in development</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul class="space-y-2 text-muted-foreground">
+            <li>✨ AI-powered flashcard generation</li>
+            <li>📚 Create and manage decks</li>
+            <li>🎯 Spaced repetition review system (SM-2 algorithm)</li>
+            <li>📊 Study statistics and progress tracking</li>
+            <li>📤 Export decks to CSV/JSON</li>
+          </ul>
+        </CardContent>
+      </Card>
+    </div>
+  </body>
+</html>

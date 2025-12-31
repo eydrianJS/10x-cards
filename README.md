@@ -144,10 +144,18 @@ npm run format
 
 ## 🚀 API Endpoints
 
+### Authentication
+
+- `POST /api/auth/signup` - Register new user
+- `POST /api/auth/login` - Sign in existing user
+- `POST /api/auth/logout` - Sign out current user
+
 ### AI Generation
+
 - `POST /api/ai-generate` - Generate flashcards from text
 
 ### Flashcards
+
 - `GET /api/flashcards/due` - Get due flashcards for review
 - `GET /api/flashcards` - Get all flashcards
 - `POST /api/flashcards` - Create new flashcard
@@ -156,6 +164,7 @@ npm run format
 - `DELETE /api/flashcards/:id` - Delete flashcard
 
 ### Decks
+
 - `GET /api/decks` - Get user decks
 - `POST /api/decks` - Create new deck
 - `PUT /api/decks` - Update deck

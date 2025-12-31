@@ -1,30 +1,156 @@
 ---
 import '../styles/global.css';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+
+// Check if user is already logged in
+import { createSupabaseServerClient } from '../db/supabase.server';
+
+const supabase = createSupabaseServerClient(Astro.cookies);
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+// If user is logged in, redirect to dashboard
+if (user) {
+  return Astro.redirect('/dashboard');
+}
 ---
 
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>AI Flashcard App</title>
-	</head>
-	<body class="min-h-screen bg-background">
-		<div class="container mx-auto px-4 py-8">
-			<div class="text-center">
-				<h1 class="text-4xl font-bold text-foreground mb-4">
-					AI-Powered Flashcard Learning
-				</h1>
-				<p class="text-lg text-muted-foreground mb-8">
-					Create high-quality flashcards automatically using AI and master your subjects with proven spaced repetition.
-				</p>
-				<div class="bg-card p-6 rounded-lg shadow-sm border">
-					<p class="text-card-foreground">
-						🚧 Project initialization in progress... Stay tuned!
-					</p>
-				</div>
-			</div>
-		</div>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>AI Flashcard App - Learn Smarter with AI</title>
+  </head>
+  <body class="min-h-screen bg-background">
+    <div class="container mx-auto px-4 py-16">
+      <!-- Hero Section -->
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <h1 class="text-5xl font-bold text-foreground mb-6">AI-Powered Flashcard Learning</h1>
+        <p class="text-xl text-muted-foreground mb-8">
+          Create high-quality flashcards automatically using AI and master your subjects with proven
+          spaced repetition.
+        </p>
+        <div class="flex gap-4 justify-center">
+          <a href="/register">
+            <Button size="lg"> Get Started Free </Button>
+          </a>
+          <a href="/login">
+            <Button variant="outline" size="lg"> Sign In </Button>
+          </a>
+        </div>
+      </div>
+
+      <!-- Features Grid -->
+      <div class="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto mb-16">
+        <Card>
+          <CardHeader>
+            <CardTitle>🤖 AI Generation</CardTitle>
+            <CardDescription>
+              Paste your notes and let AI create flashcards instantly
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p class="text-sm text-muted-foreground">
+              Save hours of manual work. Our AI analyzes your content and generates high-quality
+              question-answer pairs automatically.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>🧠 Spaced Repetition</CardTitle>
+            <CardDescription> Master any subject with proven SM-2 algorithm </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p class="text-sm text-muted-foreground">
+              Review cards at optimal intervals for long-term retention. The system automatically
+              schedules reviews based on your performance.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>📚 Organized Decks</CardTitle>
+            <CardDescription> Keep your study materials perfectly organized </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p class="text-sm text-muted-foreground">
+              Create unlimited decks for different subjects. Edit, export, and manage your
+              flashcards with ease.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- How It Works -->
+      <div class="max-w-3xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-center">How It Works</CardTitle>
+            <CardDescription class="text-center">
+              Start creating flashcards in minutes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ol class="space-y-4">
+              <li class="flex gap-4">
+                <span
+                  class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold"
+                  >1</span
+                >
+                <div>
+                  <h4 class="font-semibold">Sign Up Free</h4>
+                  <p class="text-sm text-muted-foreground">
+                    Create your account in seconds - no credit card required
+                  </p>
+                </div>
+              </li>
+              <li class="flex gap-4">
+                <span
+                  class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold"
+                  >2</span
+                >
+                <div>
+                  <h4 class="font-semibold">Paste Your Notes</h4>
+                  <p class="text-sm text-muted-foreground">
+                    Copy up to 500 characters from your study materials or lecture notes
+                  </p>
+                </div>
+              </li>
+              <li class="flex gap-4">
+                <span
+                  class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold"
+                  >3</span
+                >
+                <div>
+                  <h4 class="font-semibold">AI Generates Flashcards</h4>
+                  <p class="text-sm text-muted-foreground">
+                    Review, edit, and save AI-generated flashcards to your deck
+                  </p>
+                </div>
+              </li>
+              <li class="flex gap-4">
+                <span
+                  class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold"
+                  >4</span
+                >
+                <div>
+                  <h4 class="font-semibold">Study with Spaced Repetition</h4>
+                  <p class="text-sm text-muted-foreground">
+                    Review cards at optimal intervals for maximum retention
+                  </p>
+                </div>
+              </li>
+            </ol>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </body>
 </html>
