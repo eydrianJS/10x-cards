@@ -1,11 +1,3 @@
 {
-  "git": {
-    "deploymentEnabled": {
-      "main": true
-    }
-  },
-  "buildCommand": "npm run build",
-  "framework": "astro",
   "regions": ["fra1"]
 }
-
