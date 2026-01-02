@@ -19,7 +19,7 @@ if (error || !user) {
 }
 
 // Fetch user's decks with flashcard counts
-const { data: decksData, error: decksError } = await supabase
+const { data: decksData } = await supabase
   .from('decks')
   .select(
     `
@@ -32,7 +32,7 @@ const { data: decksData, error: decksError } = await supabase
 
 // Transform decks to include flashcard count
 const decks =
-  decksData?.map(deck => ({
+  decksData?.map((deck) => ({
     ...deck,
     flashcardCount:
       Array.isArray(deck.flashcards) && deck.flashcards.length > 0 ? deck.flashcards[0].count : 0,
@@ -41,16 +41,13 @@ const decks =
 const totalDecks = decks.length;
 
 // Fetch user's flashcards
-const { data: flashcards, error: flashcardsError } = await supabase
-  .from('flashcards')
-  .select('*')
-  .eq('user_id', user.id);
+const { data: flashcards } = await supabase.from('flashcards').select('*').eq('user_id', user.id);
 
 const totalFlashcards = flashcards?.length || 0;
 
 // Calculate cards due today
 const today = new Date().toISOString();
-const dueFlashcards = flashcards?.filter(card => card.next_review_date <= today) || [];
+const dueFlashcards = flashcards?.filter((card) => card.next_review_date <= today) || [];
 const cardsDueToday = dueFlashcards.length;
 ---
 

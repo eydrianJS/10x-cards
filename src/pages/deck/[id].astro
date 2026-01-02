@@ -3,7 +3,6 @@ import '../../styles/global.css';
 import { createSupabaseServerClient } from '../../db/supabase.server';
 import FlashcardManager from '../../components/islands/FlashcardManager';
 import ManualCardForm from '../../components/islands/ManualCardForm';
-import { Button } from '../../components/ui/button';
 
 // Check if user is authenticated
 const supabase = createSupabaseServerClient(Astro.cookies);
@@ -36,7 +35,7 @@ if (deckError || !deck) {
 }
 
 // Fetch flashcards for this deck
-const { data: flashcards, error: flashcardsError } = await supabase
+const { data: flashcards } = await supabase
   .from('flashcards')
   .select('*')
   .eq('deck_id', id)
