@@ -1,48 +1,99 @@
+import { OpenRouter } from '@openrouter/sdk';
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
-import { AIGenerationRequest, AIGenerationResponse, ApiResponse } from '../../shared/types';
 
 // Request validation schema
 const requestSchema = z.object({
   text: z.string().min(10).max(500),
-  contentType: z.enum(['academic', 'technical', 'general', 'language']).optional().default('general'),
+  contentType: z
+    .enum(['academic', 'technical', 'general', 'language'])
+    .optional()
+    .default('general'),
   maxCards: z.number().min(1).max(20).optional().default(10),
+  sourceLanguage: z.string().optional(),
+  targetLanguage: z.string().optional(),
 });
 
-// Content type specific prompts
-const CONTENT_PROMPTS = {
-  academic: `You are an expert educator creating flashcards for academic subjects. Create flashcards that focus on key concepts, definitions, theories, and important facts. Each flashcard should test understanding of fundamental principles.`,
-  technical: `You are a technical expert creating flashcards for technical subjects. Create flashcards that focus on concepts, processes, tools, methodologies, and best practices. Include practical applications and real-world scenarios.`,
-  general: `You are creating educational flashcards on general knowledge topics. Create flashcards that cover important facts, concepts, and relationships that help build comprehensive understanding.`,
-  language: `You are a language learning expert creating flashcards for vocabulary and grammar. Create flashcards that focus on word meanings, usage contexts, grammatical structures, and practical communication.`,
+// Content type specific prompt generators
+const generatePrompt = (
+  contentType: string,
+  text: string,
+  maxCards: number,
+  sourceLanguage?: string,
+  targetLanguage?: string
+): string => {
+  const prompts: Record<string, string> = {
+    academic: `You are an expert educator creating study flashcards.
+
+Create exactly ${maxCards} educational flashcards about the following topic:
+"${text}"
+
+Requirements:
+- Focus on key concepts, definitions, theories, and important facts about this topic
+- Questions should test understanding and knowledge retention
+- Answers should be clear, accurate, and educational
+- Return ONLY a valid JSON array with no additional text
+
+Format: [{"question": "...", "answer": "..."}, ...]`,
+
+    technical: `You are a technical expert creating study flashcards.
+
+Create exactly ${maxCards} technical flashcards about the following topic:
+"${text}"
+
+Requirements:
+- Focus on technical concepts, processes, tools, and best practices about this topic
+- Questions should test practical knowledge and understanding
+- Include real-world applications where relevant
+- Answers should be precise and technically accurate
+- Return ONLY a valid JSON array with no additional text
+
+Format: [{"question": "...", "answer": "..."}, ...]`,
+
+    general: `You are creating educational flashcards for general knowledge.
+
+Create exactly ${maxCards} flashcards about the following topic:
+"${text}"
+
+Requirements:
+- Cover important facts, concepts, and relationships about this topic
+- Questions should be clear and straightforward
+- Answers should be informative but concise
+- Focus on the most important information
+- Return ONLY a valid JSON array with no additional text
+
+Format: [{"question": "...", "answer": "..."}, ...]`,
+
+    language:
+      sourceLanguage && targetLanguage
+        ? `You are a language learning expert creating vocabulary flashcards from ${sourceLanguage} to ${targetLanguage}.
+
+Create exactly ${maxCards} vocabulary flashcards for the following topic/context:
+"${text}"
+
+Requirements:
+- Question: A word or short phrase in ${sourceLanguage} related to the topic
+- Answer: Translation in ${targetLanguage} with a simple example sentence if helpful
+- Focus on practical, commonly used vocabulary
+- Return ONLY a valid JSON array with no additional text
+
+Format: [{"question": "word in ${sourceLanguage}", "answer": "translation in ${targetLanguage} (example: ...)"}]`
+        : `You are a language learning expert creating vocabulary flashcards.
+
+Create exactly ${maxCards} language learning flashcards for the following topic/context:
+"${text}"
+
+Requirements:
+- Focus on vocabulary, common phrases, and practical language usage related to this topic
+- Questions should present words or phrases to learn
+- Answers should provide translations, definitions, or usage examples
+- Return ONLY a valid JSON array with no additional text
+
+Format: [{"question": "...", "answer": "..."}, ...]`,
+  };
+
+  return prompts[contentType] || prompts.general;
 };
-
-// Retry logic with exponential backoff
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxAttempts: number = 3,
-  baseDelay: number = 1000
-): Promise<T> {
-  let lastError: Error;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error as Error;
-
-      if (attempt === maxAttempts) {
-        throw lastError;
-      }
-
-      // Exponential backoff: 1s, 2s, 4s
-      const delay = baseDelay * Math.pow(2, attempt - 1);
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-
-  throw lastError!;
-}
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -56,7 +107,7 @@ export const POST: APIRoute = async ({ request }) => {
           success: false,
           error: 'Validation failed',
           message: validationResult.error.issues.map(issue => issue.message).join(', '),
-        } as ApiResponse<null>),
+        }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
@@ -64,7 +115,7 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const { text, contentType, maxCards } = validationResult.data;
+    const { text, contentType, maxCards, sourceLanguage, targetLanguage } = validationResult.data;
 
     // Get OpenRouter API key from environment
     const apiKey = import.meta.env.OPENROUTER_API_KEY;
@@ -75,7 +126,7 @@ export const POST: APIRoute = async ({ request }) => {
           success: false,
           error: 'Configuration error',
           message: 'AI service not configured',
-        } as ApiResponse<null>),
+        }),
         {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
@@ -83,66 +134,47 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Prepare AI prompt
-    const prompt = `${CONTENT_PROMPTS[contentType]}
+    // Initialize OpenRouter client
+    const openrouter = new OpenRouter({
+      apiKey,
+    });
 
-Create exactly ${maxCards} high-quality flashcards from the following text. Each flashcard must have a "question" and "answer" field.
+    // Generate the appropriate prompt
+    const prompt = generatePrompt(contentType, text, maxCards, sourceLanguage, targetLanguage);
 
-Text to process:
-${text}
-
-Requirements:
-- Questions should be clear, specific, and test understanding
-- Answers should be comprehensive but concise
-- Focus on the most important concepts from the text
-- Use active recall principles (questions that require thinking, not just memorization)
-- Return ONLY valid JSON array with no additional text or formatting
-
-Format: [{"question": "...", "answer": "..."}, ...]`;
-
-    // Call OpenRouter API with retry logic
-    const aiResponse = await retryWithBackoff(async () => {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://ai-flashcard-app.com',
-          'X-Title': 'AI Flashcard Learning App',
-        },
-        body: JSON.stringify({
-          model: 'anthropic/claude-3-haiku', // Cost-effective model
-          messages: [
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          max_tokens: 4000,
-          temperature: 0.3, // Lower temperature for more consistent results
-        }),
+    // Call OpenRouter API with Mistral Small Creative model
+    let rawContent = '';
+    try {
+      const stream = await openrouter.chat.send({
+        model: 'mistralai/devstral-2512:free',
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        stream: true,
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('OpenRouter API error:', response.status, errorText);
-        throw new Error(`AI service error: ${response.status} ${response.statusText}`);
+      // Collect streamed response
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content;
+        if (content) {
+          rawContent += content;
+        }
       }
 
-      return response;
-    }, 3, 1000);
-
-    const aiData = await aiResponse.json();
-
-    // Validate AI response
-    if (!aiData.choices?.[0]?.message?.content) {
-      console.error('Invalid AI response structure:', aiData);
+      if (!rawContent.trim()) {
+        throw new Error('Empty response from AI service');
+      }
+    } catch (error) {
+      console.error('OpenRouter API error:', error);
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'AI response error',
-          message: 'Invalid response from AI service',
-        } as ApiResponse<null>),
+          error: 'AI service error',
+          message: error instanceof Error ? error.message : 'Failed to generate flashcards',
+        }),
         {
           status: 502,
           headers: { 'Content-Type': 'application/json' },
@@ -150,12 +182,20 @@ Format: [{"question": "...", "answer": "..."}, ...]`;
       );
     }
 
-    const rawContent = aiData.choices[0].message.content.trim();
-
     // Try to parse the JSON response
     let flashcards;
     try {
-      flashcards = JSON.parse(rawContent);
+      // Sometimes AI wraps JSON in markdown code blocks, clean it up
+      let jsonText = rawContent.trim();
+
+      // Remove markdown code blocks if present
+      if (jsonText.startsWith('```json')) {
+        jsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+
+      flashcards = JSON.parse(jsonText);
 
       // Validate flashcards structure
       if (!Array.isArray(flashcards)) {
@@ -168,7 +208,12 @@ Format: [{"question": "...", "answer": "..."}, ...]`;
 
       // Validate each flashcard has required fields
       for (const card of flashcards) {
-        if (!card.question || !card.answer || typeof card.question !== 'string' || typeof card.answer !== 'string') {
+        if (
+          !card.question ||
+          !card.answer ||
+          typeof card.question !== 'string' ||
+          typeof card.answer !== 'string'
+        ) {
           throw new Error('Invalid flashcard structure');
         }
       }
@@ -179,7 +224,7 @@ Format: [{"question": "...", "answer": "..."}, ...]`;
           success: false,
           error: 'AI parsing error',
           message: 'Failed to parse AI response',
-        } as ApiResponse<null>),
+        }),
         {
           status: 502,
           headers: { 'Content-Type': 'application/json' },
@@ -193,13 +238,12 @@ Format: [{"question": "...", "answer": "..."}, ...]`;
         success: true,
         data: { flashcards },
         message: `Successfully generated ${flashcards.length} flashcards`,
-      } as ApiResponse<AIGenerationResponse>),
+      }),
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       }
     );
-
   } catch (error) {
     console.error('AI generation error:', error);
 
@@ -210,7 +254,7 @@ Format: [{"question": "...", "answer": "..."}, ...]`;
           success: false,
           error: 'AI generation failed',
           message: error.message,
-        } as ApiResponse<null>),
+        }),
         {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
@@ -223,7 +267,7 @@ Format: [{"question": "...", "answer": "..."}, ...]`;
         success: false,
         error: 'Internal server error',
         message: 'An unexpected error occurred',
-      } as ApiResponse<null>),
+      }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },

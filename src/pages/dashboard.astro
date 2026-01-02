@@ -15,6 +15,28 @@ const {
 if (error || !user) {
   return Astro.redirect('/login');
 }
+
+// Fetch user's decks
+const { data: decks, error: decksError } = await supabase
+  .from('decks')
+  .select('*')
+  .eq('user_id', user.id)
+  .order('created_at', { ascending: false });
+
+const totalDecks = decks?.length || 0;
+
+// Fetch user's flashcards
+const { data: flashcards, error: flashcardsError } = await supabase
+  .from('flashcards')
+  .select('*')
+  .eq('user_id', user.id);
+
+const totalFlashcards = flashcards?.length || 0;
+
+// Calculate cards due today
+const today = new Date().toISOString();
+const dueFlashcards = flashcards?.filter(card => card.next_review_date <= today) || [];
+const cardsDueToday = dueFlashcards.length;
 ---
 
 <html lang="en">
@@ -26,10 +48,10 @@ if (error || !user) {
     <title>Dashboard - AI Flashcard App</title>
   </head>
   <body class="min-h-screen bg-background">
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
       <!-- Header -->
-      <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-foreground">Dashboard</h1>
+      <div class="flex justify-between items-center mb-12">
+        <h1 class="text-4xl font-bold text-foreground">Dashboard</h1>
         <div class="flex items-center gap-4">
           <span class="text-sm text-muted-foreground">{user.email}</span>
           <LogoutButton client:load />
@@ -37,7 +59,7 @@ if (error || !user) {
       </div>
 
       <!-- Welcome Card -->
-      <Card class="mb-8">
+      <Card class="mb-12 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
         <CardHeader>
           <CardTitle>Welcome to AI Flashcard Learning!</CardTitle>
           <CardDescription>
@@ -45,41 +67,70 @@ if (error || !user) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p class="text-muted-foreground">
+          <p class="text-muted-foreground mb-4">
             🎉 You've successfully logged in! Your authentication system is working perfectly.
           </p>
+          <a href="/create-deck">
+            <button
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4"
+            >
+              ✨ Create New Deck
+            </button>
+          </a>
         </CardContent>
       </Card>
 
       <!-- Quick Stats Grid -->
-      <div class="grid gap-4 md:grid-cols-3 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle class="text-base">Total Decks</CardTitle>
+      <div class="mt-6 grid gap-6 md:grid-cols-3 mb-12">
+        <Card class="hover:shadow-lg transition-shadow">
+          <CardHeader class="pb-3">
+            <CardTitle class="text-base font-medium text-muted-foreground">Total Decks</CardTitle>
           </CardHeader>
           <CardContent>
-            <p class="text-3xl font-bold">0</p>
-            <p class="text-sm text-muted-foreground mt-1">No decks yet</p>
+            <p class="text-4xl font-bold text-foreground">{totalDecks}</p>
+            <p class="text-sm text-muted-foreground mt-2">
+              {
+                totalDecks === 0
+                  ? 'No decks yet'
+                  : `${totalDecks} deck${totalDecks === 1 ? '' : 's'} created`
+              }
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle class="text-base">Total Flashcards</CardTitle>
+        <Card class="hover:shadow-lg transition-shadow">
+          <CardHeader class="pb-3">
+            <CardTitle class="text-base font-medium text-muted-foreground"
+              >Total Flashcards</CardTitle
+            >
           </CardHeader>
           <CardContent>
-            <p class="text-3xl font-bold">0</p>
-            <p class="text-sm text-muted-foreground mt-1">Create your first deck</p>
+            <p class="text-4xl font-bold text-foreground">{totalFlashcards}</p>
+            <p class="text-sm text-muted-foreground mt-2">
+              {
+                totalFlashcards === 0
+                  ? 'Create your first deck'
+                  : `${totalFlashcards} card${totalFlashcards === 1 ? '' : 's'} total`
+              }
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle class="text-base">Cards Due Today</CardTitle>
+        <Card class="hover:shadow-lg transition-shadow">
+          <CardHeader class="pb-3">
+            <CardTitle class="text-base font-medium text-muted-foreground"
+              >Cards Due Today</CardTitle
+            >
           </CardHeader>
           <CardContent>
-            <p class="text-3xl font-bold">0</p>
-            <p class="text-sm text-muted-foreground mt-1">All caught up!</p>
+            <p class="text-4xl font-bold text-foreground">{cardsDueToday}</p>
+            <p class="text-sm text-muted-foreground mt-2">
+              {
+                cardsDueToday === 0
+                  ? 'All caught up! 🎉'
+                  : `${cardsDueToday} card${cardsDueToday === 1 ? '' : 's'} to review`
+              }
+            </p>
           </CardContent>
         </Card>
       </div>

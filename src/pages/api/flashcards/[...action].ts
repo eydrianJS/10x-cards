@@ -1,22 +1,6 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
-import { createClient } from '@supabase/supabase-js';
-import { ApiResponse, Flashcard as FlashcardType, CreateFlashcardForm } from '../../../shared/types';
-
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Supabase configuration missing');
-}
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+import { createSupabaseServerClient } from '../../../db/supabase.server';
 
 // Validation schemas
 const createFlashcardSchema = z.object({
@@ -24,6 +8,13 @@ const createFlashcardSchema = z.object({
   answer: z.string().min(1).max(2000),
   deckId: z.string().uuid(),
   creationMethod: z.enum(['ai', 'manual']).default('manual'),
+  originalQuestion: z.string().optional(),
+  originalAnswer: z.string().optional(),
+  editPercentage: z.number().min(0).max(100).optional(),
+});
+
+const bulkCreateFlashcardsSchema = z.object({
+  flashcards: z.array(createFlashcardSchema).min(1).max(20),
 });
 
 const updateFlashcardSchema = z.object({
@@ -35,33 +26,21 @@ const updateSM2Schema = z.object({
   quality: z.number().min(0).max(5),
 });
 
-// Helper function to get user from session
-async function getUserFromRequest(request: Request) {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-
-  if (error || !user) {
-    return null;
-  }
-
-  return user;
-}
-
-export const GET: APIRoute = async ({ request, params }) => {
+export const GET: APIRoute = async ({ request, params, cookies }) => {
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
+    const supabase = createSupabaseServerClient(cookies);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Unauthorized',
           message: 'Authentication required',
-        } as ApiResponse<null>),
+        }),
         {
           status: 401,
           headers: { 'Content-Type': 'application/json' },
@@ -95,7 +74,7 @@ export const GET: APIRoute = async ({ request, params }) => {
             success: false,
             error: 'Database error',
             message: 'Failed to fetch due flashcards',
-          } as ApiResponse<null>),
+          }),
           {
             status: 500,
             headers: { 'Content-Type': 'application/json' },
@@ -108,7 +87,7 @@ export const GET: APIRoute = async ({ request, params }) => {
           success: true,
           data: flashcards,
           message: `Found ${flashcards.length} due flashcards`,
-        } as ApiResponse<FlashcardType[]>),
+        }),
         {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
@@ -138,7 +117,7 @@ export const GET: APIRoute = async ({ request, params }) => {
           success: false,
           error: 'Database error',
           message: 'Failed to fetch flashcards',
-        } as ApiResponse<null>),
+        }),
         {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
@@ -151,13 +130,12 @@ export const GET: APIRoute = async ({ request, params }) => {
         success: true,
         data: flashcards,
         message: `Found ${flashcards.length} flashcards`,
-      } as ApiResponse<FlashcardType[]>),
+      }),
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       }
     );
-
   } catch (error) {
     console.error('GET flashcards error:', error);
     return new Response(
@@ -165,7 +143,7 @@ export const GET: APIRoute = async ({ request, params }) => {
         success: false,
         error: 'Internal server error',
         message: 'An unexpected error occurred',
-      } as ApiResponse<null>),
+      }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
@@ -174,16 +152,21 @@ export const GET: APIRoute = async ({ request, params }) => {
   }
 };
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
+    const supabase = createSupabaseServerClient(cookies);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Unauthorized',
           message: 'Authentication required',
-        } as ApiResponse<null>),
+        }),
         {
           status: 401,
           headers: { 'Content-Type': 'application/json' },
@@ -192,6 +175,104 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const body = await request.json();
+
+    // Check if this is bulk create or single create
+    const isBulkCreate = body.flashcards && Array.isArray(body.flashcards);
+
+    if (isBulkCreate) {
+      // Bulk create validation
+      const validationResult = bulkCreateFlashcardsSchema.safeParse(body);
+
+      if (!validationResult.success) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Validation failed',
+            message: validationResult.error.issues.map(issue => issue.message).join(', '),
+          }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      const { flashcards } = validationResult.data;
+
+      // Verify deck ownership for the first card (all should have same deck)
+      const firstCard = flashcards[0];
+      const { data: deck, error: deckError } = await supabase
+        .from('decks')
+        .select('id')
+        .eq('id', firstCard.deckId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (deckError || !deck) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Not found',
+            message: 'Deck not found or access denied',
+          }),
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      // Prepare flashcards for insertion
+      const flashcardsToInsert = flashcards.map(card => ({
+        question: card.question,
+        answer: card.answer,
+        deck_id: card.deckId,
+        user_id: user.id,
+        creation_method: card.creationMethod,
+        original_question: card.originalQuestion,
+        original_answer: card.originalAnswer,
+        edit_percentage: card.editPercentage || 0,
+        easiness_factor: 2.5,
+        interval: 0,
+        repetition_count: 0,
+        next_review_date: new Date().toISOString(),
+      }));
+
+      // Bulk insert flashcards
+      const { data: insertedCards, error } = await supabase
+        .from('flashcards')
+        .insert(flashcardsToInsert)
+        .select();
+
+      if (error) {
+        console.error('Database error:', error);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Database error',
+            message: 'Failed to create flashcards',
+          }),
+          {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: insertedCards,
+          message: `Created ${insertedCards.length} flashcards successfully`,
+        }),
+        {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Single create validation
     const validationResult = createFlashcardSchema.safeParse(body);
 
     if (!validationResult.success) {
@@ -200,7 +281,7 @@ export const POST: APIRoute = async ({ request }) => {
           success: false,
           error: 'Validation failed',
           message: validationResult.error.issues.map(issue => issue.message).join(', '),
-        } as ApiResponse<null>),
+        }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
@@ -208,7 +289,15 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const { question, answer, deckId, creationMethod } = validationResult.data;
+    const {
+      question,
+      answer,
+      deckId,
+      creationMethod,
+      originalQuestion,
+      originalAnswer,
+      editPercentage,
+    } = validationResult.data;
 
     // Verify deck ownership
     const { data: deck, error: deckError } = await supabase
@@ -224,7 +313,7 @@ export const POST: APIRoute = async ({ request }) => {
           success: false,
           error: 'Not found',
           message: 'Deck not found or access denied',
-        } as ApiResponse<null>),
+        }),
         {
           status: 404,
           headers: { 'Content-Type': 'application/json' },
@@ -241,9 +330,12 @@ export const POST: APIRoute = async ({ request }) => {
         deck_id: deckId,
         user_id: user.id,
         creation_method: creationMethod,
-        ease_factor: 2.5,
+        original_question: originalQuestion,
+        original_answer: originalAnswer,
+        edit_percentage: editPercentage || 0,
+        easiness_factor: 2.5,
         interval: 0,
-        repetitions: 0,
+        repetition_count: 0,
         next_review_date: new Date().toISOString(),
       })
       .select()
@@ -256,7 +348,7 @@ export const POST: APIRoute = async ({ request }) => {
           success: false,
           error: 'Database error',
           message: 'Failed to create flashcard',
-        } as ApiResponse<null>),
+        }),
         {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
@@ -269,13 +361,12 @@ export const POST: APIRoute = async ({ request }) => {
         success: true,
         data: flashcard,
         message: 'Flashcard created successfully',
-      } as ApiResponse<FlashcardType>),
+      }),
       {
         status: 201,
         headers: { 'Content-Type': 'application/json' },
       }
     );
-
   } catch (error) {
     console.error('POST flashcard error:', error);
     return new Response(
@@ -283,7 +374,7 @@ export const POST: APIRoute = async ({ request }) => {
         success: false,
         error: 'Internal server error',
         message: 'An unexpected error occurred',
-      } as ApiResponse<null>),
+      }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
@@ -292,16 +383,21 @@ export const POST: APIRoute = async ({ request }) => {
   }
 };
 
-export const PUT: APIRoute = async ({ request, params }) => {
+export const PUT: APIRoute = async ({ request, params, cookies }) => {
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
+    const supabase = createSupabaseServerClient(cookies);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Unauthorized',
           message: 'Authentication required',
-        } as ApiResponse<null>),
+        }),
         {
           status: 401,
           headers: { 'Content-Type': 'application/json' },
@@ -322,7 +418,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
             success: false,
             error: 'Validation failed',
             message: validationResult.error.issues.map(issue => issue.message).join(', '),
-          } as ApiResponse<null>),
+          }),
           {
             status: 400,
             headers: { 'Content-Type': 'application/json' },
@@ -346,7 +442,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
             success: false,
             error: 'Not found',
             message: 'Flashcard not found',
-          } as ApiResponse<null>),
+          }),
           {
             status: 404,
             headers: { 'Content-Type': 'application/json' },
@@ -355,24 +451,24 @@ export const PUT: APIRoute = async ({ request, params }) => {
       }
 
       // Calculate new SM-2 values
-      let { ease_factor, interval, repetitions } = currentCard;
+      let { easiness_factor, interval, repetition_count } = currentCard;
 
       if (quality >= 3) {
-        if (repetitions === 0) {
+        if (repetition_count === 0) {
           interval = 1;
-        } else if (repetitions === 1) {
+        } else if (repetition_count === 1) {
           interval = 6;
         } else {
-          interval = Math.round(interval * ease_factor);
+          interval = Math.round(interval * easiness_factor);
         }
-        repetitions++;
+        repetition_count++;
       } else {
-        repetitions = 0;
+        repetition_count = 0;
         interval = 1;
       }
 
-      ease_factor = ease_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-      ease_factor = Math.max(1.3, ease_factor);
+      easiness_factor = easiness_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+      easiness_factor = Math.max(1.3, easiness_factor);
 
       const nextReviewDate = new Date();
       nextReviewDate.setDate(nextReviewDate.getDate() + interval);
@@ -381,9 +477,9 @@ export const PUT: APIRoute = async ({ request, params }) => {
       const { data: updatedCard, error: updateError } = await supabase
         .from('flashcards')
         .update({
-          ease_factor,
+          easiness_factor,
           interval,
-          repetitions,
+          repetition_count,
           next_review_date: nextReviewDate.toISOString(),
           last_reviewed_at: new Date().toISOString(),
           quality,
@@ -401,7 +497,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
             success: false,
             error: 'Database error',
             message: 'Failed to update flashcard',
-          } as ApiResponse<null>),
+          }),
           {
             status: 500,
             headers: { 'Content-Type': 'application/json' },
@@ -414,7 +510,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
           success: true,
           data: updatedCard,
           message: 'Flashcard updated successfully',
-        } as ApiResponse<FlashcardType>),
+        }),
         {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
@@ -432,7 +528,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
           success: false,
           error: 'Validation failed',
           message: validationResult.error.issues.map(issue => issue.message).join(', '),
-        } as ApiResponse<null>),
+        }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
@@ -458,7 +554,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
           success: false,
           error: 'Database error',
           message: 'Failed to update flashcard',
-        } as ApiResponse<null>),
+        }),
         {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
@@ -471,13 +567,12 @@ export const PUT: APIRoute = async ({ request, params }) => {
         success: true,
         data: updatedCard,
         message: 'Flashcard updated successfully',
-      } as ApiResponse<FlashcardType>),
+      }),
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       }
     );
-
   } catch (error) {
     console.error('PUT flashcard error:', error);
     return new Response(
@@ -485,7 +580,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
         success: false,
         error: 'Internal server error',
         message: 'An unexpected error occurred',
-      } as ApiResponse<null>),
+      }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
@@ -494,16 +589,21 @@ export const PUT: APIRoute = async ({ request, params }) => {
   }
 };
 
-export const DELETE: APIRoute = async ({ request, params }) => {
+export const DELETE: APIRoute = async ({ request, params, cookies }) => {
   try {
-    const user = await getUserFromRequest(request);
-    if (!user) {
+    const supabase = createSupabaseServerClient(cookies);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Unauthorized',
           message: 'Authentication required',
-        } as ApiResponse<null>),
+        }),
         {
           status: 401,
           headers: { 'Content-Type': 'application/json' },
@@ -520,7 +620,7 @@ export const DELETE: APIRoute = async ({ request, params }) => {
           success: false,
           error: 'Bad request',
           message: 'Flashcard ID required',
-        } as ApiResponse<null>),
+        }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
@@ -541,7 +641,7 @@ export const DELETE: APIRoute = async ({ request, params }) => {
           success: false,
           error: 'Database error',
           message: 'Failed to delete flashcard',
-        } as ApiResponse<null>),
+        }),
         {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
@@ -554,13 +654,12 @@ export const DELETE: APIRoute = async ({ request, params }) => {
         success: true,
         data: null,
         message: 'Flashcard deleted successfully',
-      } as ApiResponse<null>),
+      }),
       {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       }
     );
-
   } catch (error) {
     console.error('DELETE flashcard error:', error);
     return new Response(
@@ -568,7 +667,7 @@ export const DELETE: APIRoute = async ({ request, params }) => {
         success: false,
         error: 'Internal server error',
         message: 'An unexpected error occurred',
-      } as ApiResponse<null>),
+      }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
