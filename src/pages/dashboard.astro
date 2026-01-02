@@ -71,7 +71,7 @@ const cardsDueToday = dueFlashcards.length;
       </div>
 
       <!-- Welcome Card -->
-      <Card class="mb-12 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+      <Card className="mb-12 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
         <CardHeader>
           <CardTitle>Welcome to AI Flashcard Learning!</CardTitle>
           <CardDescription>
@@ -103,9 +103,11 @@ const cardsDueToday = dueFlashcards.length;
 
       <!-- Quick Stats Grid -->
       <div class="mt-6 grid gap-6 md:grid-cols-3 mb-12">
-        <Card class="hover:shadow-lg transition-shadow">
-          <CardHeader class="pb-3">
-            <CardTitle class="text-base font-medium text-muted-foreground">Total Decks</CardTitle>
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-medium text-muted-foreground"
+              >Total Decks</CardTitle
+            >
           </CardHeader>
           <CardContent>
             <p class="text-4xl font-bold text-foreground">{totalDecks}</p>
@@ -119,9 +121,9 @@ const cardsDueToday = dueFlashcards.length;
           </CardContent>
         </Card>
 
-        <Card class="hover:shadow-lg transition-shadow">
-          <CardHeader class="pb-3">
-            <CardTitle class="text-base font-medium text-muted-foreground"
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-medium text-muted-foreground"
               >Total Flashcards</CardTitle
             >
           </CardHeader>
@@ -137,9 +139,9 @@ const cardsDueToday = dueFlashcards.length;
           </CardContent>
         </Card>
 
-        <Card class="hover:shadow-lg transition-shadow">
-          <CardHeader class="pb-3">
-            <CardTitle class="text-base font-medium text-muted-foreground"
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-medium text-muted-foreground"
               >Cards Due Today</CardTitle
             >
           </CardHeader>
@@ -172,7 +174,7 @@ const cardsDueToday = dueFlashcards.length;
       </div>
 
       <!-- Coming Soon Section -->
-      <Card class="mt-12">
+      <Card className="mt-12">
         <CardHeader>
           <CardTitle>Coming Soon</CardTitle>
           <CardDescription>Features currently in development</CardDescription>

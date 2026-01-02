@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from '../../../db/supabase.server';
 // PATCH /api/learning-lessons/:id - Update learning lesson
 // DELETE /api/learning-lessons/:id - Delete learning lesson
 
-export const GET: APIRoute = async ({ params, request, cookies }) => {
+export const GET: APIRoute = async ({ params, cookies }) => {
   const supabase = createSupabaseServerClient(cookies);
 
   // Verify authentication
@@ -274,7 +274,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
   }
 };
 
-export const DELETE: APIRoute = async ({ params, request, cookies }) => {
+export const DELETE: APIRoute = async ({ params, cookies }) => {
   const supabase = createSupabaseServerClient(cookies);
 
   // Verify authentication

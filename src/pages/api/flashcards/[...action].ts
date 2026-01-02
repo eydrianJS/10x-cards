@@ -589,7 +589,7 @@ export const PUT: APIRoute = async ({ request, params, cookies }) => {
   }
 };
 
-export const DELETE: APIRoute = async ({ request, params, cookies }) => {
+export const DELETE: APIRoute = async ({ params, cookies }) => {
   try {
     const supabase = createSupabaseServerClient(cookies);
     const {

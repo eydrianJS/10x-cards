@@ -111,7 +111,6 @@ export const useFlashcardStore = create<FlashcardStore>()(
 
     getDueCards: (deckId) => {
       const state = get();
-      const now = new Date();
       return state.flashcards.filter((card) => {
         if (deckId && card.deckId !== deckId) return false;
         return card.isDue();

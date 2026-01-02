@@ -3,7 +3,7 @@ import { createSupabaseServerClient } from '../../db/supabase.server';
 
 // GET /api/learning-lessons - List all learning lessons for user
 // POST /api/learning-lessons - Create new learning lesson
-export const GET: APIRoute = async ({ request, cookies }) => {
+export const GET: APIRoute = async ({ cookies }) => {
   const supabase = createSupabaseServerClient(cookies);
 
   // Verify authentication

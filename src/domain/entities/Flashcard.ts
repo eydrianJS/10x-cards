@@ -1,4 +1,5 @@
-import { Flashcard as FlashcardType, SM2_QUALITIES } from '../../shared/types';
+import type { Flashcard as FlashcardType } from '../../shared/types';
+import { SM2_QUALITIES } from '../../shared/types';
 
 /**
  * Domain entity for Flashcard with SM-2 spaced repetition algorithm

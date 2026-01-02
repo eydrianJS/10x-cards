@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { createSupabaseServerClient } from '../../db/supabase.server';
 
 // GET /api/daily-stats - Get daily statistics for the authenticated user
-export const GET: APIRoute = async ({ request, cookies }) => {
+export const GET: APIRoute = async ({ cookies }) => {
   const supabase = createSupabaseServerClient(cookies);
 
   // Verify authentication

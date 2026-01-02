@@ -7,9 +7,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.supabase = supabase;
 
   // Refresh session if needed
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  await supabase.auth.getSession();
 
   // You can add protected route logic here if needed
   // For now, we handle it on individual pages

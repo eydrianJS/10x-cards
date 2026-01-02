@@ -230,15 +230,17 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
     }
 
     // Update session stats
-    const cardsStudied = session.cards_studied + 1;
+    const cardsStudied = (session.cards_studied || 0) + 1;
     const cardsLearned =
       updatedFlashcard.learning_status === 'learned'
-        ? session.cards_learned + 1
-        : session.cards_learned;
-    const newCardsToday = wasNewCard ? session.new_cards_today + 1 : session.new_cards_today;
+        ? (session.cards_learned || 0) + 1
+        : session.cards_learned || 0;
+    const newCardsToday = wasNewCard
+      ? (session.new_cards_today || 0) + 1
+      : session.new_cards_today || 0;
     const reviewCardsToday = !wasNewCard
-      ? session.review_cards_today + 1
-      : session.review_cards_today;
+      ? (session.review_cards_today || 0) + 1
+      : session.review_cards_today || 0;
 
     const { data: updatedSession, error: sessionUpdateError } = await supabase
       .from('daily_learning_sessions')

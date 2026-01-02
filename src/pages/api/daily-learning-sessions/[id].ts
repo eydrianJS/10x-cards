@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from '../../../db/supabase.server';
 // GET /api/daily-learning-sessions/:id - Get session details
 // PATCH /api/daily-learning-sessions/:id - End session
 
-export const GET: APIRoute = async ({ params, request, cookies }) => {
+export const GET: APIRoute = async ({ params, cookies }) => {
   const supabase = createSupabaseServerClient(cookies);
 
   // Verify authentication
@@ -210,8 +210,8 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
     }
 
     // Calculate duration
-    const startedAt = new Date(session.started_at);
-    const endedAt = new Date(session.ended_at);
+    const startedAt = session.started_at ? new Date(session.started_at) : new Date();
+    const endedAt = session.ended_at ? new Date(session.ended_at) : new Date();
     const durationSeconds = Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000);
 
     return new Response(

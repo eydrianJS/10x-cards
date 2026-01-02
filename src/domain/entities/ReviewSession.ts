@@ -1,4 +1,4 @@
-import { ReviewSession as ReviewSessionType } from '../../shared/types';
+import type { ReviewSession as ReviewSessionType } from '../../shared/types';
 
 /**
  * Domain entity for ReviewSession

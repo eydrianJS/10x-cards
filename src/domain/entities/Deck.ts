@@ -1,4 +1,4 @@
-import { Deck as DeckType } from '../../shared/types';
+import type { Deck as DeckType } from '../../shared/types';
 
 /**
  * Domain entity for Deck

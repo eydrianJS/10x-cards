@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { Deck } from '../domain/entities';
-import { Deck as DeckType } from '../shared/types';
+import type { Deck as DeckType } from '../shared/types';
 
 interface DeckState {
   decks: Deck[];

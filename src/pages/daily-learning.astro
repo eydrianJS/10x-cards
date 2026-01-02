@@ -16,12 +16,11 @@ if (authError || !user) {
 }
 
 const mode = Astro.url.searchParams.get('mode');
-const sessionId = Astro.url.searchParams.get('sessionId') || undefined;
 const deckIds =
   Astro.url.searchParams
     .get('deckIds')
     ?.split(',')
-    .filter(id => id) || [];
+    .filter((id) => id) || [];
 const dailyLimit = parseInt(Astro.url.searchParams.get('dailyLimit') || '20');
 const lessonId = Astro.url.searchParams.get('lessonId') || undefined;
 ---
@@ -47,7 +46,6 @@ const lessonId = Astro.url.searchParams.get('lessonId') || undefined;
         mode === 'session' ? (
           <DailyLearningSession
             client:only="react"
-            sessionId={sessionId}
             deckIds={deckIds}
             dailyLimit={dailyLimit}
             lessonId={lessonId}
