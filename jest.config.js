@@ -33,6 +33,8 @@ export default {
     '!src/**/*.astro',
     '!src/env.d.ts',
     '!src/types.ts',
+    '!src/components/**/*.tsx', // Exclude UI components (require browser environment)
+    '!src/pages/**/*', // Exclude Astro pages
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
