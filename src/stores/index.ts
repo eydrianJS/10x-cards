@@ -1,5 +1,11 @@
 // Auth Store
-export { useAuthStore, useAuthUser, useIsAuthenticated, useAuthLoading, useSessionValid } from './auth-store';
+export {
+  useAuthStore,
+  useAuthUser,
+  useIsAuthenticated,
+  useAuthLoading,
+  useSessionValid,
+} from './auth-store';
 
 // Flashcard Store
 export {

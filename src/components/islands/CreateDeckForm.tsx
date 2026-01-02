@@ -187,7 +187,7 @@ export default function CreateDeckForm() {
     setIsLoading(true);
 
     try {
-      const flashcardsData = generatedCards.map(card => ({
+      const flashcardsData = generatedCards.map((card) => ({
         question: card.question,
         answer: card.answer,
         deckId: deckId!,
@@ -307,7 +307,7 @@ export default function CreateDeckForm() {
                 type="text"
                 placeholder="e.g., Biology 101, Spanish Vocabulary, AWS Certification"
                 value={deckName}
-                onChange={e => setDeckName(e.target.value)}
+                onChange={(e) => setDeckName(e.target.value)}
                 required
                 maxLength={100}
               />
@@ -321,7 +321,7 @@ export default function CreateDeckForm() {
                 id="deckDescription"
                 placeholder="Brief description of what this deck covers..."
                 value={deckDescription}
-                onChange={e => setDeckDescription(e.target.value)}
+                onChange={(e) => setDeckDescription(e.target.value)}
                 maxLength={500}
                 rows={3}
               />
@@ -451,7 +451,7 @@ export default function CreateDeckForm() {
                           : 'e.g., "ancient Egypt", "solar system", "coffee production"'
                   }
                   value={aiText}
-                  onChange={e => setAiText(e.target.value.slice(0, 500))}
+                  onChange={(e) => setAiText(e.target.value.slice(0, 500))}
                   maxLength={500}
                   rows={contentType === 'language' ? 3 : 8}
                   required
@@ -469,7 +469,7 @@ export default function CreateDeckForm() {
                       type="text"
                       placeholder="e.g., English, Spanish, Polish"
                       value={sourceLanguage}
-                      onChange={e => setSourceLanguage(e.target.value)}
+                      onChange={(e) => setSourceLanguage(e.target.value)}
                       required={contentType === 'language'}
                     />
                   </div>
@@ -483,7 +483,7 @@ export default function CreateDeckForm() {
                       type="text"
                       placeholder="e.g., French, German, Japanese"
                       value={targetLanguage}
-                      onChange={e => setTargetLanguage(e.target.value)}
+                      onChange={(e) => setTargetLanguage(e.target.value)}
                       required={contentType === 'language'}
                     />
                   </div>
@@ -499,7 +499,7 @@ export default function CreateDeckForm() {
                     id="contentType"
                     className="w-full px-3 py-2 border rounded-md bg-background"
                     value={contentType}
-                    onChange={e => setContentType(e.target.value as ContentType)}
+                    onChange={(e) => setContentType(e.target.value as ContentType)}
                   >
                     <option value="general">General Knowledge</option>
                     <option value="academic">Academic</option>
@@ -518,7 +518,7 @@ export default function CreateDeckForm() {
                     min={1}
                     max={20}
                     value={maxCards}
-                    onChange={e => setMaxCards(Number(e.target.value))}
+                    onChange={(e) => setMaxCards(Number(e.target.value))}
                   />
                 </div>
               </div>
@@ -566,7 +566,7 @@ export default function CreateDeckForm() {
                       <label className="text-sm font-medium">Question</label>
                       <Textarea
                         value={card.question}
-                        onChange={e => handleEditCard(index, 'question', e.target.value)}
+                        onChange={(e) => handleEditCard(index, 'question', e.target.value)}
                         rows={2}
                       />
                     </div>
@@ -575,7 +575,7 @@ export default function CreateDeckForm() {
                       <label className="text-sm font-medium">Answer</label>
                       <Textarea
                         value={card.answer}
-                        onChange={e => handleEditCard(index, 'answer', e.target.value)}
+                        onChange={(e) => handleEditCard(index, 'answer', e.target.value)}
                         rows={3}
                       />
                     </div>
@@ -635,7 +635,7 @@ export default function CreateDeckForm() {
                 id="question"
                 placeholder="Enter your question..."
                 value={manualQuestion}
-                onChange={e => setManualQuestion(e.target.value)}
+                onChange={(e) => setManualQuestion(e.target.value)}
                 required
                 maxLength={500}
                 rows={3}
@@ -650,7 +650,7 @@ export default function CreateDeckForm() {
                 id="answer"
                 placeholder="Enter the answer..."
                 value={manualAnswer}
-                onChange={e => setManualAnswer(e.target.value)}
+                onChange={(e) => setManualAnswer(e.target.value)}
                 required
                 maxLength={2000}
                 rows={4}

@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { ReviewSession } from '../domain/entities';
-import { ReviewSession as ReviewSessionType } from '../shared/types';
 
 interface ReviewSessionState {
   currentSession: ReviewSession | null;
@@ -73,7 +72,7 @@ export const useReviewSessionStore = create<ReviewSessionStore>()(
 
     setSessions: (sessions) => {
       set((state) => {
-        state.sessions = sessions.map(s => new ReviewSession(s));
+        state.sessions = sessions.map((s) => new ReviewSession(s));
         state.error = null;
       });
     },
@@ -93,12 +92,12 @@ export const useReviewSessionStore = create<ReviewSessionStore>()(
 
     getUserSessions: (userId) => {
       const state = get();
-      return state.sessions.filter(session => session.userId === userId);
+      return state.sessions.filter((session) => session.userId === userId);
     },
 
     getSessionsByDeck: (deckId) => {
       const state = get();
-      return state.sessions.filter(session => session.deckId === deckId);
+      return state.sessions.filter((session) => session.deckId === deckId);
     },
 
     getSessionStats: (userId) => {
@@ -114,9 +113,18 @@ export const useReviewSessionStore = create<ReviewSessionStore>()(
         };
       }
 
-      const totalCardsReviewed = userSessions.reduce((sum, session) => sum + session.cardsReviewed, 0);
-      const totalDuration = userSessions.reduce((sum, session) => sum + session.getDurationMinutes(), 0);
-      const totalCompletionRate = userSessions.reduce((sum, session) => sum + session.getCompletionPercentage(), 0);
+      const totalCardsReviewed = userSessions.reduce(
+        (sum, session) => sum + session.cardsReviewed,
+        0
+      );
+      const totalDuration = userSessions.reduce(
+        (sum, session) => sum + session.getDurationMinutes(),
+        0
+      );
+      const totalCompletionRate = userSessions.reduce(
+        (sum, session) => sum + session.getCompletionPercentage(),
+        0
+      );
 
       return {
         totalSessions: userSessions.length,
@@ -142,6 +150,9 @@ export const useCurrentSession = () => useReviewSessionStore((state) => state.cu
 export const useSessions = () => useReviewSessionStore((state) => state.sessions);
 export const useReviewSessionLoading = () => useReviewSessionStore((state) => state.isLoading);
 export const useReviewSessionError = () => useReviewSessionStore((state) => state.error);
-export const useUserSessions = (userId: string) => useReviewSessionStore((state) => state.getUserSessions(userId));
-export const useSessionsByDeck = (deckId: string) => useReviewSessionStore((state) => state.getSessionsByDeck(deckId));
-export const useSessionStats = (userId: string) => useReviewSessionStore((state) => state.getSessionStats(userId));
+export const useUserSessions = (userId: string) =>
+  useReviewSessionStore((state) => state.getUserSessions(userId));
+export const useSessionsByDeck = (deckId: string) =>
+  useReviewSessionStore((state) => state.getSessionsByDeck(deckId));
+export const useSessionStats = (userId: string) =>
+  useReviewSessionStore((state) => state.getSessionStats(userId));

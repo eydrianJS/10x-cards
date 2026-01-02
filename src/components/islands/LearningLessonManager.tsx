@@ -133,7 +133,7 @@ export default function LearningLessonManager({ onStartLesson }: LearningLessonM
         throw new Error('Failed to delete lesson');
       }
 
-      setLessons(lessons.filter(l => l.id !== lessonId));
+      setLessons(lessons.filter((l) => l.id !== lessonId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     }
@@ -154,12 +154,12 @@ export default function LearningLessonManager({ onStartLesson }: LearningLessonM
 
   const toggleDeckSelection = (deckId: string, isQuickStart: boolean = false) => {
     if (isQuickStart) {
-      setQuickStartDeckIds(prev =>
-        prev.includes(deckId) ? prev.filter(id => id !== deckId) : [...prev, deckId]
+      setQuickStartDeckIds((prev) =>
+        prev.includes(deckId) ? prev.filter((id) => id !== deckId) : [...prev, deckId]
       );
     } else {
-      setSelectedDeckIds(prev =>
-        prev.includes(deckId) ? prev.filter(id => id !== deckId) : [...prev, deckId]
+      setSelectedDeckIds((prev) =>
+        prev.includes(deckId) ? prev.filter((id) => id !== deckId) : [...prev, deckId]
       );
     }
   };
@@ -212,7 +212,7 @@ export default function LearningLessonManager({ onStartLesson }: LearningLessonM
             <div>
               <label className="block text-sm font-medium mb-2">Select Decks</label>
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {decks.map(deck => (
+                {decks.map((deck) => (
                   <label key={deck.id} className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -233,7 +233,7 @@ export default function LearningLessonManager({ onStartLesson }: LearningLessonM
                 min="1"
                 max="100"
                 value={quickStartLimit}
-                onChange={e => setQuickStartLimit(parseInt(e.target.value))}
+                onChange={(e) => setQuickStartLimit(parseInt(e.target.value))}
                 className="w-32"
               />
             </div>
@@ -258,7 +258,7 @@ export default function LearningLessonManager({ onStartLesson }: LearningLessonM
               <Input
                 type="text"
                 value={lessonName}
-                onChange={e => setLessonName(e.target.value)}
+                onChange={(e) => setLessonName(e.target.value)}
                 placeholder="e.g., Biology + Chemistry"
               />
             </div>
@@ -268,7 +268,7 @@ export default function LearningLessonManager({ onStartLesson }: LearningLessonM
               <Input
                 type="text"
                 value={lessonDescription}
-                onChange={e => setLessonDescription(e.target.value)}
+                onChange={(e) => setLessonDescription(e.target.value)}
                 placeholder="What is this lesson about?"
               />
             </div>
@@ -276,7 +276,7 @@ export default function LearningLessonManager({ onStartLesson }: LearningLessonM
             <div>
               <label className="block text-sm font-medium mb-2">Select Decks *</label>
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {decks.map(deck => (
+                {decks.map((deck) => (
                   <label key={deck.id} className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -297,7 +297,7 @@ export default function LearningLessonManager({ onStartLesson }: LearningLessonM
                 min="1"
                 max="100"
                 value={dailyLimit}
-                onChange={e => setDailyLimit(parseInt(e.target.value))}
+                onChange={(e) => setDailyLimit(parseInt(e.target.value))}
                 className="w-32"
               />
             </div>
@@ -323,7 +323,7 @@ export default function LearningLessonManager({ onStartLesson }: LearningLessonM
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {lessons.map(lesson => (
+            {lessons.map((lesson) => (
               <Card key={lesson.id} className="p-6">
                 <div className="space-y-3">
                   <div>
@@ -336,7 +336,7 @@ export default function LearningLessonManager({ onStartLesson }: LearningLessonM
                   <div className="space-y-1 text-sm text-gray-600">
                     <div>
                       <span className="font-medium">Decks:</span>{' '}
-                      {lesson.decks.map(d => d.name).join(', ')}
+                      {lesson.decks.map((d) => d.name).join(', ')}
                     </div>
                     <div>
                       <span className="font-medium">Daily limit:</span>{' '}

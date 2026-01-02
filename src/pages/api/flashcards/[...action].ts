@@ -188,7 +188,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
           JSON.stringify({
             success: false,
             error: 'Validation failed',
-            message: validationResult.error.issues.map(issue => issue.message).join(', '),
+            message: validationResult.error.issues.map((issue) => issue.message).join(', '),
           }),
           {
             status: 400,
@@ -223,7 +223,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
 
       // Prepare flashcards for insertion
-      const flashcardsToInsert = flashcards.map(card => ({
+      const flashcardsToInsert = flashcards.map((card) => ({
         question: card.question,
         answer: card.answer,
         deck_id: card.deckId,
@@ -280,7 +280,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         JSON.stringify({
           success: false,
           error: 'Validation failed',
-          message: validationResult.error.issues.map(issue => issue.message).join(', '),
+          message: validationResult.error.issues.map((issue) => issue.message).join(', '),
         }),
         {
           status: 400,
@@ -417,7 +417,7 @@ export const PUT: APIRoute = async ({ request, params, cookies }) => {
           JSON.stringify({
             success: false,
             error: 'Validation failed',
-            message: validationResult.error.issues.map(issue => issue.message).join(', '),
+            message: validationResult.error.issues.map((issue) => issue.message).join(', '),
           }),
           {
             status: 400,
@@ -527,7 +527,7 @@ export const PUT: APIRoute = async ({ request, params, cookies }) => {
         JSON.stringify({
           success: false,
           error: 'Validation failed',
-          message: validationResult.error.issues.map(issue => issue.message).join(', '),
+          message: validationResult.error.issues.map((issue) => issue.message).join(', '),
         }),
         {
           status: 400,

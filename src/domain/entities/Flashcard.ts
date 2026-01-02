@@ -149,7 +149,7 @@ export class Flashcard implements FlashcardType {
     const originalSet = new Set(originalWords);
     const modifiedSet = new Set(modifiedWords);
 
-    const intersection = new Set([...originalSet].filter(x => modifiedSet.has(x)));
+    const intersection = new Set([...originalSet].filter((x) => modifiedSet.has(x)));
     const union = new Set([...originalSet, ...modifiedSet]);
 
     return union.size === 0 ? 0 : ((union.size - intersection.size) / union.size) * 100;
@@ -166,7 +166,7 @@ export class Flashcard implements FlashcardType {
    * Get quality description for current quality rating
    */
   getQualityDescription(): string {
-    const qualityObj = SM2_QUALITIES.find(q => q.value === this.quality);
+    const qualityObj = SM2_QUALITIES.find((q) => q.value === this.quality);
     return qualityObj?.description || 'Not rated';
   }
 }

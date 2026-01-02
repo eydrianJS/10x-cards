@@ -62,7 +62,17 @@ export interface AIGenerationRequest {
 }
 
 export interface AIGenerationResponse {
-  flashcards: Omit<Flashcard, 'id' | 'deckId' | 'createdAt' | 'updatedAt' | 'easeFactor' | 'interval' | 'repetitions' | 'nextReviewDate'>[];
+  flashcards: Omit<
+    Flashcard,
+    | 'id'
+    | 'deckId'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'easeFactor'
+    | 'interval'
+    | 'repetitions'
+    | 'nextReviewDate'
+  >[];
 }
 
 // API Response types

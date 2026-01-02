@@ -208,7 +208,7 @@ export default function DailyLearningSession({
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Daily Learning Session</h2>
-          <p className="text-sm text-gray-600 mt-1">{decks.map(d => d.name).join(', ')}</p>
+          <p className="text-sm text-gray-600 mt-1">{decks.map((d) => d.name).join(', ')}</p>
         </div>
         <Button variant="outline" onClick={handleExit}>
           Exit
@@ -282,7 +282,7 @@ export default function DailyLearningSession({
                     <input
                       type="checkbox"
                       checked={userMarkedCorrect}
-                      onChange={e => setUserMarkedCorrect(e.target.checked)}
+                      onChange={(e) => setUserMarkedCorrect(e.target.checked)}
                       className="w-5 h-5 rounded"
                     />
                     <span className="text-sm font-medium">I got this correct</span>

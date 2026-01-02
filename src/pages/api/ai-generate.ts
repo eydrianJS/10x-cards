@@ -106,7 +106,7 @@ export const POST: APIRoute = async ({ request }) => {
         JSON.stringify({
           success: false,
           error: 'Validation failed',
-          message: validationResult.error.issues.map(issue => issue.message).join(', '),
+          message: validationResult.error.issues.map((issue) => issue.message).join(', '),
         }),
         {
           status: 400,

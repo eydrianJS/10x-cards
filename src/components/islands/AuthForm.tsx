@@ -87,7 +87,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               type="email"
               placeholder="your.email@example.com"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
             />
@@ -103,7 +103,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 mode === 'register' ? 'Min 8 chars, with uppercase & number' : 'Enter your password'
               }
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
             />

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { Flashcard } from '../domain/entities';
-import { Flashcard as FlashcardType } from '../shared/types';
+import type { Flashcard as FlashcardType } from '../shared/types';
 
 interface FlashcardState {
   flashcards: Flashcard[];
@@ -37,7 +37,7 @@ export const useFlashcardStore = create<FlashcardStore>()(
     // Actions
     setFlashcards: (flashcards) => {
       set((state) => {
-        state.flashcards = flashcards.map(f => new Flashcard(f));
+        state.flashcards = flashcards.map((f) => new Flashcard(f));
         state.error = null;
       });
     },
@@ -50,7 +50,7 @@ export const useFlashcardStore = create<FlashcardStore>()(
 
     updateFlashcard: (id, updates) => {
       set((state) => {
-        const index = state.flashcards.findIndex(f => f.id === id);
+        const index = state.flashcards.findIndex((f) => f.id === id);
         if (index !== -1) {
           const existingCard = state.flashcards[index];
           const updatedCard = new Flashcard({ ...existingCard, ...updates });
@@ -66,7 +66,7 @@ export const useFlashcardStore = create<FlashcardStore>()(
 
     removeFlashcard: (id) => {
       set((state) => {
-        state.flashcards = state.flashcards.filter(f => f.id !== id);
+        state.flashcards = state.flashcards.filter((f) => f.id !== id);
         // Clear current card if it's the one being removed
         if (state.currentCard?.id === id) {
           state.currentCard = null;
@@ -82,7 +82,7 @@ export const useFlashcardStore = create<FlashcardStore>()(
 
     applySM2Rating: (cardId, quality) => {
       set((state) => {
-        const index = state.flashcards.findIndex(f => f.id === cardId);
+        const index = state.flashcards.findIndex((f) => f.id === cardId);
         if (index !== -1) {
           const existingCard = state.flashcards[index];
           const updatedCard = existingCard.applySM2Algorithm(quality);
@@ -112,7 +112,7 @@ export const useFlashcardStore = create<FlashcardStore>()(
     getDueCards: (deckId) => {
       const state = get();
       const now = new Date();
-      return state.flashcards.filter(card => {
+      return state.flashcards.filter((card) => {
         if (deckId && card.deckId !== deckId) return false;
         return card.isDue();
       });
@@ -120,7 +120,7 @@ export const useFlashcardStore = create<FlashcardStore>()(
 
     getCardsByDeck: (deckId) => {
       const state = get();
-      return state.flashcards.filter(card => card.deckId === deckId);
+      return state.flashcards.filter((card) => card.deckId === deckId);
     },
 
     clearStore: () => {
@@ -139,5 +139,7 @@ export const useFlashcards = () => useFlashcardStore((state) => state.flashcards
 export const useCurrentCard = () => useFlashcardStore((state) => state.currentCard);
 export const useFlashcardLoading = () => useFlashcardStore((state) => state.isLoading);
 export const useFlashcardError = () => useFlashcardStore((state) => state.error);
-export const useDueCards = (deckId?: string) => useFlashcardStore((state) => state.getDueCards(deckId));
-export const useCardsByDeck = (deckId: string) => useFlashcardStore((state) => state.getCardsByDeck(deckId));
+export const useDueCards = (deckId?: string) =>
+  useFlashcardStore((state) => state.getDueCards(deckId));
+export const useCardsByDeck = (deckId: string) =>
+  useFlashcardStore((state) => state.getCardsByDeck(deckId));

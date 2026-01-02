@@ -40,7 +40,7 @@ export const useDeckStore = create<DeckStore>()(
     // Actions
     setDecks: (decks) => {
       set((state) => {
-        state.decks = decks.map(d => new Deck(d));
+        state.decks = decks.map((d) => new Deck(d));
         state.error = null;
       });
     },
@@ -53,7 +53,7 @@ export const useDeckStore = create<DeckStore>()(
 
     updateDeck: (id, updates) => {
       set((state) => {
-        const index = state.decks.findIndex(d => d.id === id);
+        const index = state.decks.findIndex((d) => d.id === id);
         if (index !== -1) {
           const existingDeck = state.decks[index];
           const updatedDeck = new Deck({ ...existingDeck, ...updates });
@@ -69,7 +69,7 @@ export const useDeckStore = create<DeckStore>()(
 
     removeDeck: (id) => {
       set((state) => {
-        state.decks = state.decks.filter(d => d.id !== id);
+        state.decks = state.decks.filter((d) => d.id !== id);
         // Clear current deck if it's the one being removed
         if (state.currentDeck?.id === id) {
           state.currentDeck = null;
@@ -85,7 +85,7 @@ export const useDeckStore = create<DeckStore>()(
 
     incrementFlashcardCount: (deckId) => {
       set((state) => {
-        const index = state.decks.findIndex(d => d.id === deckId);
+        const index = state.decks.findIndex((d) => d.id === deckId);
         if (index !== -1) {
           state.decks[index] = state.decks[index].incrementFlashcardCount();
         }
@@ -94,7 +94,7 @@ export const useDeckStore = create<DeckStore>()(
 
     decrementFlashcardCount: (deckId) => {
       set((state) => {
-        const index = state.decks.findIndex(d => d.id === deckId);
+        const index = state.decks.findIndex((d) => d.id === deckId);
         if (index !== -1) {
           state.decks[index] = state.decks[index].decrementFlashcardCount();
         }
@@ -103,7 +103,7 @@ export const useDeckStore = create<DeckStore>()(
 
     setFlashcardCount: (deckId, count) => {
       set((state) => {
-        const index = state.decks.findIndex(d => d.id === deckId);
+        const index = state.decks.findIndex((d) => d.id === deckId);
         if (index !== -1) {
           state.decks[index] = state.decks[index].setFlashcardCount(count);
         }
@@ -125,17 +125,17 @@ export const useDeckStore = create<DeckStore>()(
 
     getUserDecks: (userId) => {
       const state = get();
-      return state.decks.filter(deck => deck.userId === userId);
+      return state.decks.filter((deck) => deck.userId === userId);
     },
 
     getPublicDecks: () => {
       const state = get();
-      return state.decks.filter(deck => deck.isPublic);
+      return state.decks.filter((deck) => deck.isPublic);
     },
 
     getDeckById: (id) => {
       const state = get();
-      return state.decks.find(deck => deck.id === id);
+      return state.decks.find((deck) => deck.id === id);
     },
 
     clearStore: () => {

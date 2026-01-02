@@ -63,7 +63,7 @@ export const GET: APIRoute = async ({ cookies }) => {
     }
 
     // Transform data to include flashcard count
-    const decksWithCounts = decks.map(deck => ({
+    const decksWithCounts = decks.map((deck) => ({
       ...deck,
       flashcardCount:
         Array.isArray(deck.flashcards) && deck.flashcards.length > 0 ? deck.flashcards[0].count : 0,
@@ -126,7 +126,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         JSON.stringify({
           success: false,
           error: 'Validation failed',
-          message: validationResult.error.issues.map(issue => issue.message).join(', '),
+          message: validationResult.error.issues.map((issue) => issue.message).join(', '),
         }),
         {
           status: 400,
@@ -221,7 +221,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         JSON.stringify({
           success: false,
           error: 'Validation failed',
-          message: validationResult.error.issues.map(issue => issue.message).join(', '),
+          message: validationResult.error.issues.map((issue) => issue.message).join(', '),
         }),
         {
           status: 400,

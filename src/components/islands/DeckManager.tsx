@@ -68,7 +68,7 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
 
       // Update deck in list
       setDecks(
-        decks.map(deck =>
+        decks.map((deck) =>
           deck.id === deckId
             ? { ...deck, name: editName.trim(), description: editDescription.trim() || null }
             : deck
@@ -84,7 +84,7 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
   };
 
   const handleDelete = async (deckId: string, deckName: string) => {
-    const deck = decks.find(d => d.id === deckId);
+    const deck = decks.find((d) => d.id === deckId);
 
     if (deck && deck.flashcardCount > 0) {
       setError('Cannot delete deck with existing flashcards. Please delete all cards first.');
@@ -110,7 +110,7 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
       }
 
       // Remove deck from list
-      setDecks(decks.filter(deck => deck.id !== deckId));
+      setDecks(decks.filter((deck) => deck.id !== deckId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete deck');
     } finally {
@@ -139,20 +139,20 @@ export default function DeckManager({ initialDecks }: DeckManagerProps) {
       )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {decks.map(deck => (
+        {decks.map((deck) => (
           <Card key={deck.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               {editingDeck === deck.id ? (
                 <div className="space-y-2">
                   <Input
                     value={editName}
-                    onChange={e => setEditName(e.target.value)}
+                    onChange={(e) => setEditName(e.target.value)}
                     placeholder="Deck name"
                     disabled={loading}
                   />
                   <Input
                     value={editDescription}
-                    onChange={e => setEditDescription(e.target.value)}
+                    onChange={(e) => setEditDescription(e.target.value)}
                     placeholder="Description (optional)"
                     disabled={loading}
                   />

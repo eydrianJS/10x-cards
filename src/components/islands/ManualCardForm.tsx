@@ -94,7 +94,7 @@ export default function ManualCardForm({ deckId, onCardAdded }: ManualCardFormPr
             <Input
               id="question"
               value={question}
-              onChange={e => setQuestion(e.target.value)}
+              onChange={(e) => setQuestion(e.target.value)}
               placeholder="Enter your question"
               disabled={loading}
               maxLength={500}
@@ -109,7 +109,7 @@ export default function ManualCardForm({ deckId, onCardAdded }: ManualCardFormPr
             <Textarea
               id="answer"
               value={answer}
-              onChange={e => setAnswer(e.target.value)}
+              onChange={(e) => setAnswer(e.target.value)}
               placeholder="Enter the answer"
               disabled={loading}
               maxLength={2000}

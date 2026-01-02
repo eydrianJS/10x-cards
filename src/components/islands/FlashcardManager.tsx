@@ -85,7 +85,7 @@ export default function FlashcardManager({ initialFlashcards }: FlashcardManager
 
       // Update card in list
       setFlashcards(
-        flashcards.map(card =>
+        flashcards.map((card) =>
           card.id === cardId
             ? { ...card, question: editQuestion.trim(), answer: editAnswer.trim() }
             : card
@@ -120,7 +120,7 @@ export default function FlashcardManager({ initialFlashcards }: FlashcardManager
       }
 
       // Remove card from list
-      setFlashcards(flashcards.filter(card => card.id !== cardId));
+      setFlashcards(flashcards.filter((card) => card.id !== cardId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete flashcard');
     } finally {
@@ -155,12 +155,12 @@ export default function FlashcardManager({ initialFlashcards }: FlashcardManager
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">
           {flashcards.length} card{flashcards.length === 1 ? '' : 's'} total •{' '}
-          {flashcards.filter(c => isDue(c.next_review_date)).length} due for review
+          {flashcards.filter((c) => isDue(c.next_review_date)).length} due for review
         </p>
       </div>
 
       <div className="space-y-3">
-        {flashcards.map(card => (
+        {flashcards.map((card) => (
           <Card
             key={card.id}
             className={`transition-all ${isDue(card.next_review_date) ? 'border-primary' : ''}`}
@@ -174,7 +174,7 @@ export default function FlashcardManager({ initialFlashcards }: FlashcardManager
                         <label className="text-sm font-medium mb-1 block">Question</label>
                         <Input
                           value={editQuestion}
-                          onChange={e => setEditQuestion(e.target.value)}
+                          onChange={(e) => setEditQuestion(e.target.value)}
                           placeholder="Question"
                           disabled={loading}
                           maxLength={500}
@@ -184,7 +184,7 @@ export default function FlashcardManager({ initialFlashcards }: FlashcardManager
                         <label className="text-sm font-medium mb-1 block">Answer</label>
                         <Textarea
                           value={editAnswer}
-                          onChange={e => setEditAnswer(e.target.value)}
+                          onChange={(e) => setEditAnswer(e.target.value)}
                           placeholder="Answer"
                           disabled={loading}
                           maxLength={2000}
