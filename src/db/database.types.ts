@@ -39,6 +39,102 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_learning_progress: {
+        Row: {
+          answered_at: string | null
+          flashcard_id: string
+          id: string
+          rating: string | null
+          session_id: string
+          was_new_card: boolean | null
+        }
+        Insert: {
+          answered_at?: string | null
+          flashcard_id: string
+          id?: string
+          rating?: string | null
+          session_id: string
+          was_new_card?: boolean | null
+        }
+        Update: {
+          answered_at?: string | null
+          flashcard_id?: string
+          id?: string
+          rating?: string | null
+          session_id?: string
+          was_new_card?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_learning_progress_flashcard_id_fkey"
+            columns: ["flashcard_id"]
+            isOneToOne: false
+            referencedRelation: "due_flashcards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_learning_progress_flashcard_id_fkey"
+            columns: ["flashcard_id"]
+            isOneToOne: false
+            referencedRelation: "flashcards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_learning_progress_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "daily_learning_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_learning_sessions: {
+        Row: {
+          cards_learned: number | null
+          cards_studied: number | null
+          deck_ids: string[]
+          ended_at: string | null
+          id: string
+          lesson_id: string | null
+          new_cards_today: number | null
+          review_cards_today: number | null
+          started_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cards_learned?: number | null
+          cards_studied?: number | null
+          deck_ids: string[]
+          ended_at?: string | null
+          id?: string
+          lesson_id?: string | null
+          new_cards_today?: number | null
+          review_cards_today?: number | null
+          started_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cards_learned?: number | null
+          cards_studied?: number | null
+          deck_ids?: string[]
+          ended_at?: string | null
+          id?: string
+          lesson_id?: string | null
+          new_cards_today?: number | null
+          review_cards_today?: number | null
+          started_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_learning_sessions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "learning_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decks: {
         Row: {
           created_at: string
@@ -69,6 +165,7 @@ export type Database = {
       flashcards: {
         Row: {
           answer: string
+          correct_count: number | null
           created_at: string
           creation_method: Database["public"]["Enums"]["creation_method"]
           deck_id: string
@@ -76,6 +173,8 @@ export type Database = {
           edit_percentage: number | null
           id: string
           interval: number
+          last_learned_at: string | null
+          learning_status: string | null
           next_review_date: string
           original_answer: string | null
           original_question: string | null
@@ -86,6 +185,7 @@ export type Database = {
         }
         Insert: {
           answer: string
+          correct_count?: number | null
           created_at?: string
           creation_method: Database["public"]["Enums"]["creation_method"]
           deck_id: string
@@ -93,6 +193,8 @@ export type Database = {
           edit_percentage?: number | null
           id?: string
           interval?: number
+          last_learned_at?: string | null
+          learning_status?: string | null
           next_review_date?: string
           original_answer?: string | null
           original_question?: string | null
@@ -103,6 +205,7 @@ export type Database = {
         }
         Update: {
           answer?: string
+          correct_count?: number | null
           created_at?: string
           creation_method?: Database["public"]["Enums"]["creation_method"]
           deck_id?: string
@@ -110,6 +213,8 @@ export type Database = {
           edit_percentage?: number | null
           id?: string
           interval?: number
+          last_learned_at?: string | null
+          learning_status?: string | null
           next_review_date?: string
           original_answer?: string | null
           original_question?: string | null
@@ -134,6 +239,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      learning_lessons: {
+        Row: {
+          created_at: string | null
+          daily_new_cards_limit: number | null
+          deck_ids: string[]
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          daily_new_cards_limit?: number | null
+          deck_ids?: string[]
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          daily_new_cards_limit?: number | null
+          deck_ids?: string[]
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -252,6 +390,19 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_statistics: {
+        Row: {
+          cards_due_today: number | null
+          cards_in_progress: number | null
+          cards_learned_today: number | null
+          cards_learned_total: number | null
+          cards_to_learn: number | null
+          last_study_date: string | null
+          study_days_last_month: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       deck_statistics: {
         Row: {
           created_at: string | null
@@ -319,7 +470,26 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      calculate_study_streak: { Args: { p_user_id: string }; Returns: number }
+      get_daily_learning_cards: {
+        Args: {
+          p_deck_ids: string[]
+          p_new_cards_limit?: number
+          p_user_id: string
+        }
+        Returns: {
+          answer: string
+          correct_count: number
+          deck_id: string
+          deck_name: string
+          id: string
+          is_due: boolean
+          is_new: boolean
+          learning_status: string
+          next_review_date: string
+          question: string
+        }[]
+      }
     }
     Enums: {
       creation_method: "ai" | "manual"

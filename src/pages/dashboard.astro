@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import LogoutButton from '../components/islands/LogoutButton';
 import DeckManager from '../components/islands/DeckManager';
+import DailyStatsWidget from '../components/islands/DailyStatsWidget';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 
 // Check if user is authenticated
@@ -84,13 +85,22 @@ const cardsDueToday = dueFlashcards.length;
           <p class="text-muted-foreground mb-4">
             🎉 You've successfully logged in! Your authentication system is working perfectly.
           </p>
-          <a href="/create-deck">
-            <button
-              class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4"
-            >
-              ✨ Create New Deck
-            </button>
-          </a>
+          <div class="flex gap-3">
+            <a href="/create-deck">
+              <button
+                class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4"
+              >
+                ✨ Create New Deck
+              </button>
+            </a>
+            <a href="/daily-learning">
+              <button
+                class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-green-600 text-white hover:bg-green-700 h-10 py-2 px-4"
+              >
+                📚 Daily Learning
+              </button>
+            </a>
+          </div>
         </CardContent>
       </Card>
 
@@ -147,6 +157,12 @@ const cardsDueToday = dueFlashcards.length;
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      <!-- Daily Learning Stats -->
+      <div class="mb-12">
+        <h2 class="text-2xl font-bold mb-4">Daily Learning Progress</h2>
+        <DailyStatsWidget client:load />
       </div>
 
       <!-- Your Decks -->

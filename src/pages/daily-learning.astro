@@ -1,0 +1,99 @@
+---
+import '../styles/global.css';
+import { createSupabaseServerClient } from '../db/supabase.server';
+import LearningLessonManager from '../components/islands/LearningLessonManager';
+import DailyLearningSession from '../components/islands/DailyLearningSession';
+
+const supabase = createSupabaseServerClient(Astro.cookies);
+
+const {
+  data: { user },
+  error: authError,
+} = await supabase.auth.getUser();
+
+if (authError || !user) {
+  return Astro.redirect('/login');
+}
+
+const mode = Astro.url.searchParams.get('mode');
+const sessionId = Astro.url.searchParams.get('sessionId') || undefined;
+const deckIds =
+  Astro.url.searchParams
+    .get('deckIds')
+    ?.split(',')
+    .filter(id => id) || [];
+const dailyLimit = parseInt(Astro.url.searchParams.get('dailyLimit') || '20');
+const lessonId = Astro.url.searchParams.get('lessonId') || undefined;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Daily Learning - Flashcard App</title>
+  </head>
+  <body class="min-h-screen bg-background">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+      <!-- Back to Dashboard -->
+      <div class="mb-6">
+        <a href="/dashboard" class="text-blue-600 hover:text-blue-700 flex items-center gap-2">
+          <span>←</span> Back to Dashboard
+        </a>
+      </div>
+
+      {
+        mode === 'session' ? (
+          <DailyLearningSession
+            client:only="react"
+            sessionId={sessionId}
+            deckIds={deckIds}
+            dailyLimit={dailyLimit}
+            lessonId={lessonId}
+            onComplete={() => {}}
+            onExit={() => {}}
+          />
+        ) : (
+          <LearningLessonManager client:only="react" onStartLesson={() => {}} />
+        )
+      }
+    </div>
+
+    <script>
+      // Handle client-side navigation for lesson manager
+      document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+
+        if (mode !== 'session') {
+          // Override the onStartLesson callback
+          const handleStartLesson = (lessonId: string, deckIds: string[], limit: number) => {
+            const params = new URLSearchParams({
+              mode: 'session',
+              deckIds: deckIds.join(','),
+              dailyLimit: limit.toString(),
+            });
+
+            if (lessonId) {
+              params.append('lessonId', lessonId);
+            }
+
+            window.location.href = `/daily-learning?${params.toString()}`;
+          };
+
+          // Pass callback to window for component to use
+          (window as any).__onStartLesson = handleStartLesson;
+        } else {
+          // Override session callbacks
+          (window as any).__onSessionComplete = () => {
+            window.location.href = '/daily-learning';
+          };
+          (window as any).__onSessionExit = () => {
+            window.location.href = '/daily-learning';
+          };
+        }
+      });
+    </script>
+  </body>
+</html>
