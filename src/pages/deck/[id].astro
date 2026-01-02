@@ -1,0 +1,97 @@
+---
+import '../../styles/global.css';
+import { createSupabaseServerClient } from '../../db/supabase.server';
+import FlashcardManager from '../../components/islands/FlashcardManager';
+import ManualCardForm from '../../components/islands/ManualCardForm';
+import { Button } from '../../components/ui/button';
+
+// Check if user is authenticated
+const supabase = createSupabaseServerClient(Astro.cookies);
+const {
+  data: { user },
+  error: authError,
+} = await supabase.auth.getUser();
+
+if (authError || !user) {
+  return Astro.redirect('/login');
+}
+
+// Get deck ID from params
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/dashboard');
+}
+
+// Fetch deck details
+const { data: deck, error: deckError } = await supabase
+  .from('decks')
+  .select('*')
+  .eq('id', id)
+  .eq('user_id', user.id)
+  .single();
+
+if (deckError || !deck) {
+  return Astro.redirect('/dashboard');
+}
+
+// Fetch flashcards for this deck
+const { data: flashcards, error: flashcardsError } = await supabase
+  .from('flashcards')
+  .select('*')
+  .eq('deck_id', id)
+  .eq('user_id', user.id)
+  .order('created_at', { ascending: false });
+
+const cards = flashcards || [];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{deck.name} - Manage Cards</title>
+  </head>
+  <body class="min-h-screen bg-background">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+      <!-- Header -->
+      <div class="mb-8">
+        <div class="flex items-center gap-4 mb-4">
+          <a
+            href="/dashboard"
+            class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            ← Back to Dashboard
+          </a>
+        </div>
+        <h1 class="text-4xl font-bold text-foreground mb-2">{deck.name}</h1>
+        {deck.description && <p class="text-lg text-muted-foreground">{deck.description}</p>}
+      </div>
+
+      <!-- Add Card Form -->
+      <div class="mb-8">
+        <ManualCardForm client:load deckId={id} onCardAdded={() => window.location.reload()} />
+      </div>
+
+      <!-- Flashcard List -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold">Flashcards</h2>
+          {
+            cards.length > 0 && (
+              <a href={`/study/${id}`}>
+                <button class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4">
+                  🎯 Start Review Session
+                </button>
+              </a>
+            )
+          }
+        </div>
+
+        <FlashcardManager client:load initialFlashcards={cards} deckId={id} />
+      </div>
+    </div>
+  </body>
+</html>

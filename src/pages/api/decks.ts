@@ -65,7 +65,8 @@ export const GET: APIRoute = async ({ cookies }) => {
     // Transform data to include flashcard count
     const decksWithCounts = decks.map(deck => ({
       ...deck,
-      flashcardCount: Array.isArray(deck.flashcards) ? deck.flashcards.length : 0,
+      flashcardCount:
+        Array.isArray(deck.flashcards) && deck.flashcards.length > 0 ? deck.flashcards[0].count : 0,
     }));
 
     return new Response(

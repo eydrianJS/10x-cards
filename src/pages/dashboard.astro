@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import LogoutButton from '../components/islands/LogoutButton';
+import DeckManager from '../components/islands/DeckManager';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 
 // Check if user is authenticated
@@ -16,14 +17,27 @@ if (error || !user) {
   return Astro.redirect('/login');
 }
 
-// Fetch user's decks
-const { data: decks, error: decksError } = await supabase
+// Fetch user's decks with flashcard counts
+const { data: decksData, error: decksError } = await supabase
   .from('decks')
-  .select('*')
+  .select(
+    `
+    *,
+    flashcards(count)
+  `
+  )
   .eq('user_id', user.id)
   .order('created_at', { ascending: false });
 
-const totalDecks = decks?.length || 0;
+// Transform decks to include flashcard count
+const decks =
+  decksData?.map(deck => ({
+    ...deck,
+    flashcardCount:
+      Array.isArray(deck.flashcards) && deck.flashcards.length > 0 ? deck.flashcards[0].count : 0,
+  })) || [];
+
+const totalDecks = decks.length;
 
 // Fetch user's flashcards
 const { data: flashcards, error: flashcardsError } = await supabase
@@ -135,8 +149,17 @@ const cardsDueToday = dueFlashcards.length;
         </Card>
       </div>
 
+      <!-- Your Decks -->
+      <div class="space-y-4 mb-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold">Your Decks</h2>
+        </div>
+
+        <DeckManager client:load initialDecks={decks} />
+      </div>
+
       <!-- Coming Soon Section -->
-      <Card>
+      <Card class="mt-12">
         <CardHeader>
           <CardTitle>Coming Soon</CardTitle>
           <CardDescription>Features currently in development</CardDescription>
@@ -144,7 +167,6 @@ const cardsDueToday = dueFlashcards.length;
         <CardContent>
           <ul class="space-y-2 text-muted-foreground">
             <li>✨ AI-powered flashcard generation</li>
-            <li>📚 Create and manage decks</li>
             <li>🎯 Spaced repetition review system (SM-2 algorithm)</li>
             <li>📊 Study statistics and progress tracking</li>
             <li>📤 Export decks to CSV/JSON</li>
