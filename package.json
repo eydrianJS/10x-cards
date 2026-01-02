@@ -33,6 +33,7 @@
     "@astrojs/node": "^9.5.1",
     "@astrojs/react": "^4.0.0",
     "@astrojs/tailwind": "^6.0.0",
+    "@astrojs/vercel": "^9.0.2",
     "@openrouter/sdk": "^0.3.11",
     "@radix-ui/react-slot": "^1.2.4",
     "@supabase/ssr": "^0.8.0",

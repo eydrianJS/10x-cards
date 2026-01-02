@@ -19,8 +19,8 @@ An AI-powered web application that automatically generates high-quality flashcar
 - **Styling**: Tailwind CSS 3 + Shadcn/ui
 - **Backend**: Supabase (PostgreSQL + Auth) + Astro API Routes
 - **AI**: OpenRouter.ai (access to multiple AI models)
-- **Deployment**: Docker + DigitalOcean + Nginx
-- **CI/CD**: GitHub Actions
+- **Deployment**: Vercel (Serverless)
+- **CI/CD**: Automatic deployments from GitHub
 
 ## 📋 Prerequisites
 
@@ -84,22 +84,27 @@ npm run build
 npm run preview
 ```
 
-## 🐳 Docker Deployment
+## 🚀 Deployment na Vercel
 
-### Local Development
+Aplikacja jest automatycznie deployowana na Vercel przy każdym push do `main`.
 
-```bash
-docker-compose up --build
-```
+### Szybki Setup
 
-### Production Deployment
+1. **Zaloguj się na Vercel**: https://vercel.com/signup (przez GitHub)
+2. **Import projektu**: Wybierz repozytorium `10devs`
+3. **Dodaj Environment Variables** w ustawieniach projektu:
+   - `PUBLIC_SUPABASE_URL`
+   - `PUBLIC_SUPABASE_ANON_KEY`
+   - `OPENROUTER_API_KEY`
+4. **Deploy!** - Automatyczne przy każdym push
 
-1. Set up your environment variables in `.env`
-2. Build and run with Docker Compose:
+📖 **Szczegółowa instrukcja**: Zobacz [DEPLOYMENT.md](./DEPLOYMENT.md)
 
-```bash
-docker-compose -f docker-compose.yml up -d --build
-```
+### Features
+- ✅ Automatyczne deployments z GitHub
+- ✅ Preview deployments dla Pull Requests
+- ✅ Darmowy hosting + HTTPS
+- ✅ Web Analytics (włączone)
 
 ## 📁 Project Structure
 
