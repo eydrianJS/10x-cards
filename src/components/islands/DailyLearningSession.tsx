@@ -41,7 +41,6 @@ interface DailyLearningSessionProps {
 }
 
 export default function DailyLearningSession({
-  sessionId: initialSessionId,
   deckIds,
   dailyLimit,
   lessonId,

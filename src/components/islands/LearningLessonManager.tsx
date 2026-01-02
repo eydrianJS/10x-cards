@@ -40,9 +40,6 @@ export default function LearningLessonManager({ onStartLesson }: LearningLessonM
   const [dailyLimit, setDailyLimit] = useState(20);
   const [creating, setCreating] = useState(false);
 
-  // Edit lesson state
-  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
-
   // Quick start form state
   const [showQuickStart, setShowQuickStart] = useState(false);
   const [quickStartDeckIds, setQuickStartDeckIds] = useState<string[]>([]);

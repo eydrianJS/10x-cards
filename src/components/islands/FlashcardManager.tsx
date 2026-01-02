@@ -22,7 +22,7 @@ interface FlashcardManagerProps {
   deckId: string;
 }
 
-export default function FlashcardManager({ initialFlashcards, deckId }: FlashcardManagerProps) {
+export default function FlashcardManager({ initialFlashcards }: FlashcardManagerProps) {
   const [flashcards, setFlashcards] = useState<Flashcard[]>(initialFlashcards);
   const [editingCard, setEditingCard] = useState<string | null>(null);
   const [editQuestion, setEditQuestion] = useState('');

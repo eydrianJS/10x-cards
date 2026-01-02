@@ -1,16 +1,13 @@
-import { fixupConfigRules, fixupPluginRules } from '@eslint/eslintrc';
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
-import prettier from 'eslint-plugin-prettier';
-import astro from 'eslint-plugin-astro';
-import { fixupConfigRules as _fixupConfigRules } from '@eslint/eslintrc';
-import globals from 'globals';
-import tsParser from '@typescript-eslint/parser';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fixupPluginRules } from '@eslint/eslintrc';
 import js from '@eslint/js';
+import typescriptEslint from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
+import astro from 'eslint-plugin-astro';
+import prettier from 'eslint-plugin-prettier';
+import globals from 'globals';
+import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export default [
   {
