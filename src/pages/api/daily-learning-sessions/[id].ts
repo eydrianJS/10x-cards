@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { createSupabaseServerClient } from '../../../../db/supabase.server';
+import { createSupabaseServerClient } from '../../../db/supabase.server';
 
 // GET /api/daily-learning-sessions/:id - Get session details
 // PATCH /api/daily-learning-sessions/:id - End session

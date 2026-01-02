@@ -230,7 +230,7 @@ BEGIN
         SELECT 
             f.id,
             f.deck_id,
-            d.name as deck_name,
+            d.name::TEXT as deck_name,
             f.question,
             f.answer,
             f.learning_status,
@@ -261,7 +261,7 @@ BEGIN
         SELECT 
             f.id,
             f.deck_id,
-            d.name as deck_name,
+            d.name::TEXT as deck_name,
             f.question,
             f.answer,
             f.learning_status,
@@ -276,10 +276,13 @@ BEGIN
         AND f.next_review_date <= CURRENT_DATE
         AND f.learning_status != 'learned'
         ORDER BY f.next_review_date ASC
+    ),
+    combined_cards AS (
+        SELECT * FROM available_new_cards
+        UNION ALL
+        SELECT * FROM due_cards
     )
-    SELECT * FROM available_new_cards
-    UNION ALL
-    SELECT * FROM due_cards
+    SELECT * FROM combined_cards
     ORDER BY RANDOM();
 END;
 $$ LANGUAGE plpgsql;
