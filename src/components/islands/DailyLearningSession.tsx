@@ -32,7 +32,6 @@ interface Deck {
 }
 
 interface DailyLearningSessionProps {
-  sessionId?: string;
   deckIds: string[];
   dailyLimit: number;
   lessonId?: string;
