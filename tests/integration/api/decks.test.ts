@@ -7,8 +7,8 @@
  */
 
 describe('Decks API', () => {
-  let authCookie: string;
-  let testDeckId: string;
+  let authCookie: string = '';
+  let testDeckId: string = '';
 
   beforeAll(async () => {
     // TBD: Setup authenticated session
