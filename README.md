@@ -84,27 +84,37 @@ npm run build
 npm run preview
 ```
 
-## 🚀 Deployment na Vercel
+## 🚀 Deployment & CI/CD
 
-Aplikacja jest automatycznie deployowana na Vercel przy każdym push do `main`.
+### Automatyczny Deployment (Vercel)
 
-### Szybki Setup
+Aplikacja deployuje się automatycznie na Vercel przy każdym push do `main`.
 
-1. **Zaloguj się na Vercel**: https://vercel.com/signup (przez GitHub)
-2. **Import projektu**: Wybierz repozytorium `10devs`
-3. **Dodaj Environment Variables** w ustawieniach projektu:
-   - `PUBLIC_SUPABASE_URL`
-   - `PUBLIC_SUPABASE_ANON_KEY`
-   - `OPENROUTER_API_KEY`
-4. **Deploy!** - Automatyczne przy każdym push
+**Setup w 3 krokach:**
 
-📖 **Szczegółowa instrukcja**: Zobacz [DEPLOYMENT.md](./DEPLOYMENT.md)
+1. Import projektu na https://vercel.com (przez GitHub)
+2. Dodaj Environment Variables (Supabase + OpenRouter keys)
+3. Deploy! 🎉
+
+📖 **Szczegóły**: [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+### Automatyczne Testy (GitHub Actions)
+
+Każdy push i PR automatycznie uruchamia:
+
+- ✅ Linting (ESLint)
+- ✅ Type checking (TypeScript)
+- ✅ Unit tests + coverage
+- ✅ Code formatting check
+- ✅ Build verification
 
 ### Features
-- ✅ Automatyczne deployments z GitHub
+
+- ✅ Zero-config deployments z GitHub
 - ✅ Preview deployments dla Pull Requests
-- ✅ Darmowy hosting + HTTPS
-- ✅ Web Analytics (włączone)
+- ✅ Darmowy hosting + HTTPS + CDN
+- ✅ Web Analytics
+- ✅ Automatyczne testy
 
 ## 📁 Project Structure
 
