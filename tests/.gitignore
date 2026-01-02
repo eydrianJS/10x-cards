@@ -1,0 +1,12 @@
+# Test artifacts
+coverage/
+*.log
+.DS_Store
+
+# Test databases
+*.db
+*.sqlite
+
+# Test environment
+.env.test.local
+
